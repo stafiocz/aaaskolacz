@@ -29,7 +29,7 @@ class HomePage extends StatelessWidget {
       ),
       LessonCard(
         title: '3. třída',
-        subtitle: 'Matematika · mix příkladů',
+        subtitle: 'Matematika a angličtina',
         icon: Icons.calculate_outlined,
         onTap: () => Navigator.pushNamed(context, '/3-trida'),
       ),
@@ -44,7 +44,6 @@ class GradePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final english = grade == 7;
     return SchoolPage(
       title: '$grade. třída',
       children: [
@@ -53,16 +52,21 @@ class GradePage extends StatelessWidget {
           style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 24),
-        LessonCard(
-          title: english ? 'Angličtina' : 'Matematika',
-          subtitle: english
-              ? 'Introduction · New friends a The exchange students. Kartičky a zkoušení slovíček.'
-              : 'Násobilka, dělení, závorky a doplňování čísel. Vše v jednom mixu.',
-          icon: english ? Icons.translate_rounded : Icons.calculate_outlined,
-          onTap: () => Navigator.pushNamed(
-            context,
-            english ? '/7-trida/anglictina' : '/3-trida/matematika',
+        if (grade == 3)
+          LessonCard(
+            title: 'Matematika',
+            subtitle:
+                'Násobilka, dělení, závorky a doplňování čísel. Vše v jednom mixu.',
+            icon: Icons.calculate_outlined,
+            onTap: () => Navigator.pushNamed(context, '/3-trida/matematika'),
           ),
+        LessonCard(
+          title: 'Angličtina',
+          subtitle: grade == 7
+              ? 'Introduction · New friends a The exchange students. Kartičky a zkoušení slovíček.'
+              : 'Introduction a Me! · Škola, barvy, rodina a další slovíčka z učebnice. Kartičky a zkoušení.',
+          icon: Icons.translate_rounded,
+          onTap: () => Navigator.pushNamed(context, '/$grade-trida/anglictina'),
         ),
       ],
     );

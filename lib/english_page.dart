@@ -7,9 +7,16 @@ import 'vocabulary_practice.dart';
 enum _Stage { intro, cards, quiz, done }
 
 class EnglishPage extends StatefulWidget {
-  const EnglishPage({super.key, this.entries});
+  const EnglishPage({
+    super.key,
+    this.grade = 7,
+    this.entries = vocabulary,
+    this.sourceTitle = 'Introduction · strany 4–7',
+  });
 
-  final List<VocabularyEntry>? entries;
+  final int grade;
+  final List<VocabularyEntry> entries;
+  final String sourceTitle;
 
   @override
   State<EnglishPage> createState() => _EnglishPageState();
@@ -64,7 +71,7 @@ class _EnglishPageState extends State<EnglishPage> {
 
   @override
   Widget build(BuildContext context) => SchoolPage(
-    title: 'Angličtina · 7. třída',
+    title: 'Angličtina · ${widget.grade}. třída',
     children: switch (_stage) {
       _Stage.intro => _intro(),
       _Stage.cards => _cards(),
@@ -80,7 +87,7 @@ class _EnglishPageState extends State<EnglishPage> {
     ),
     const SizedBox(height: 10),
     Text(
-      'Introduction · strany 4–7\n${(widget.entries ?? vocabulary).length} slovíček a frází z tvých podkladů.',
+      '${widget.sourceTitle}\n${widget.entries.length} slovíček a frází z tvých podkladů.',
       style: const TextStyle(color: Color(0xFF6E8177), height: 1.6),
     ),
     const SizedBox(height: 24),
@@ -116,8 +123,11 @@ class _EnglishPageState extends State<EnglishPage> {
       onPressed: () => Navigator.push(
         context,
         MaterialPageRoute<void>(
-          builder: (_) =>
-              VocabularyListPage(entries: widget.entries ?? vocabulary),
+          builder: (_) => VocabularyListPage(
+            entries: widget.entries,
+            grade: widget.grade,
+            sourceTitle: widget.sourceTitle,
+          ),
         ),
       ),
       icon: const Icon(Icons.list_alt_rounded),
@@ -164,7 +174,7 @@ class _EnglishPageState extends State<EnglishPage> {
           ),
         const SizedBox(height: 24),
         Text(
-          'Introduction · strana ${word.page}',
+          'Učebnice · strana ${word.page}',
           style: const TextStyle(fontSize: 12, color: Color(0xFF6E8177)),
         ),
       ]),
@@ -378,17 +388,24 @@ class _EnglishPageState extends State<EnglishPage> {
 }
 
 class VocabularyListPage extends StatelessWidget {
-  const VocabularyListPage({super.key, required this.entries});
+  const VocabularyListPage({
+    super.key,
+    required this.entries,
+    required this.grade,
+    required this.sourceTitle,
+  });
 
   final List<VocabularyEntry> entries;
+  final int grade;
+  final String sourceTitle;
 
   @override
   Widget build(BuildContext context) => SchoolPage(
-    title: 'Přehled slovíček',
+    title: 'Slovíčka · $grade. třída',
     children: [
-      const Text(
-        'Introduction · strany 4–7',
-        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+      Text(
+        sourceTitle,
+        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
       ),
       const SizedBox(height: 12),
       const Text(

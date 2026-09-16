@@ -1,6 +1,7 @@
 import 'package:aaaskola/english_page.dart';
 import 'package:aaaskola/main.dart';
 import 'package:aaaskola/vocabulary.dart';
+import 'package:aaaskola/vocabulary_grade3.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -47,6 +48,11 @@ void main() {
     expect(find.text('Matematika'), findsNothing);
     await tapText(tester, 'Angličtina');
     expect(find.text('Slovíčka po malých krocích'), findsOneWidget);
+    expect(find.text('Angličtina · 7. třída'), findsOneWidget);
+    expect(
+      tester.widget<EnglishPage>(find.byType(EnglishPage)).entries,
+      same(vocabulary),
+    );
     await tester.pageBack();
     await tester.pumpAndSettle();
     await tester.pageBack();
@@ -56,6 +62,50 @@ void main() {
     expect(find.text('MIX'), findsOneWidget);
     await tapText(tester, 'Matematika · 3. třída');
     expect(find.text('Matematika'), findsOneWidget);
+    await tapText(tester, 'Angličtina');
+    expect(find.text('Angličtina · 3. třída'), findsOneWidget);
+    expect(
+      tester.widget<EnglishPage>(find.byType(EnglishPage)).entries,
+      same(vocabularyGrade3),
+    );
+    expect(
+      find.textContaining('Introduction a Me! · strany 4–21'),
+      findsOneWidget,
+    );
+    await tapText(tester, 'Prohlédnout všechna slovíčka');
+    expect(find.text('Slovíčka · 3. třída'), findsOneWidget);
+    await tapText(tester, 'Školní potřeby');
+    expect(find.text('pencil'), findsOneWidget);
+    expect(find.text('tužka'), findsOneWidget);
+    expect(find.text('s. 4'), findsWidgets);
+  });
+
+  testWidgets('grade 3 quiz completes eight words and offers new ones', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const AaaSkolaApp());
+    await tapText(tester, '3. třída');
+    await tapText(tester, 'Angličtina');
+    await tapText(tester, 'Rovnou se vyzkoušet');
+    final seen = <String>{};
+    for (var index = 0; index < 8; index++) {
+      final question = prompt(tester);
+      expect(seen.add(question), isTrue);
+      final word = vocabularyGrade3.singleWhere((e) => e.czech == question);
+      await tester.enterText(find.byType(TextField), word.english);
+      await tapText(tester, 'Zkontrolovat');
+      expect(find.text('Správně!'), findsOneWidget);
+      await tapText(tester, 'Pokračovat');
+    }
+    expect(find.text('Kolo je hotové!'), findsOneWidget);
+    expect(find.textContaining('Na první pokus: 8 z 8'), findsOneWidget);
+    await tapText(tester, 'Další kolo s kartičkami');
+    await tapText(tester, 'Ukázat překlad');
+    final next = tester
+        .widget<Text>(find.byKey(const ValueKey('flashcard-czech')))
+        .data;
+    expect(seen, isNot(contains(next)));
+    expect(vocabularyGrade3.map((e) => e.czech), contains(next));
   });
 
   testWidgets('flashcards reveal translations then start written recall', (
@@ -132,29 +182,32 @@ void main() {
     expect(find.text('s. 5'), findsOneWidget);
   });
 
-  for (final size in [
-    const Size(320, 568),
-    const Size(390, 844),
-    const Size(844, 390),
-  ]) {
-    testWidgets('English fits $size including the on-screen keyboard', (
-      tester,
-    ) async {
-      tester.view.physicalSize = size;
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-      addTearDown(tester.view.resetViewInsets);
-      await tester.pumpWidget(const AaaSkolaApp());
-      await tapText(tester, '7. třída');
-      await tapText(tester, 'Angličtina');
-      await tapText(tester, 'Rovnou se vyzkoušet');
-      tester.view.viewInsets = const FakeViewPadding(bottom: 220);
-      await tester.pump();
-      await tester.enterText(find.byType(TextField), 'wrong');
-      await tapText(tester, 'Zkontrolovat');
-      await tapText(tester, 'Pokračovat');
-      expect(tester.takeException(), isNull);
-    });
+  for (final grade in [3, 7]) {
+    for (final size in [
+      const Size(320, 568),
+      const Size(390, 844),
+      const Size(844, 390),
+    ]) {
+      testWidgets(
+        'Grade $grade English fits $size including the on-screen keyboard',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          addTearDown(tester.view.resetViewInsets);
+          await tester.pumpWidget(const AaaSkolaApp());
+          await tapText(tester, '$grade. třída');
+          await tapText(tester, 'Angličtina');
+          await tapText(tester, 'Rovnou se vyzkoušet');
+          tester.view.viewInsets = const FakeViewPadding(bottom: 220);
+          await tester.pump();
+          await tester.enterText(find.byType(TextField), 'wrong');
+          await tapText(tester, 'Zkontrolovat');
+          await tapText(tester, 'Pokračovat');
+          expect(tester.takeException(), isNull);
+        },
+      );
+    }
   }
 }
