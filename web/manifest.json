@@ -1,0 +1,35 @@
+{
+    "name": "AAA škola",
+    "short_name": "AAA škola",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#F3F6EF",
+    "theme_color": "#226552",
+    "description": "AAA škola – hravé procvičování pro děti.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
