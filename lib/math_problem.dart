@@ -1,24 +1,51 @@
 import 'dart:math';
 
 enum PracticeMode {
-  multiplication('Násobilka', 'MALÁ NÁSOBILKA', '1–9'),
-  division('Dělení', 'DĚLENÍ BEZE ZBYTKU', 'do 90'),
-  brackets('Závorky', 'SČÍTÁNÍ A ODČÍTÁNÍ', 'do 100'),
-  missingFactor('Doplň násobení', 'DOPLŇ NÁSOBENÍ', '0–10'),
-  missingDivisor('Doplň dělení', 'DOPLŇ DĚLENÍ', '1–9');
+  multiplication('MALÁ NÁSOBILKA'),
+  division('DĚLENÍ BEZE ZBYTKU'),
+  brackets('SČÍTÁNÍ A ODČÍTÁNÍ'),
+  missingFactor('DOPLŇ NÁSOBENÍ'),
+  missingDivisor('DOPLŇ DĚLENÍ');
 
-  const PracticeMode(this.label, this.heading, this.range);
+  const PracticeMode(this.heading);
 
-  final String label;
   final String heading;
-  final String range;
 
   bool get hasMissingNumber => this == missingFactor || this == missingDivisor;
 }
 
-class MathProblem {
-  const MathProblem(this.beforeAnswer, this.afterAnswer, this.answer);
+class MixedPractice {
+  MixedPractice({Random? random}) : _random = random ?? Random();
 
+  final Random _random;
+  final List<PracticeMode> _remaining = [];
+  MathProblem? _previous;
+
+  MathProblem next() {
+    if (_remaining.isEmpty) {
+      _remaining.addAll(PracticeMode.values);
+      _remaining.shuffle(_random);
+      if (_remaining.last == _previous?.mode) {
+        _remaining.insert(0, _remaining.removeLast());
+      }
+    }
+    return _previous = MathProblem.next(
+      _remaining.removeLast(),
+      _random,
+      previous: _previous,
+    );
+  }
+}
+
+class MathProblem {
+  const MathProblem(
+    this.mode,
+    this.beforeAnswer,
+    this.afterAnswer,
+    this.answer,
+  );
+
+  final PracticeMode mode;
   final String beforeAnswer;
   final String afterAnswer;
   final int answer;
@@ -42,19 +69,29 @@ class MathProblem {
       case PracticeMode.multiplication:
         final left = random.nextInt(9) + 1;
         final right = random.nextInt(9) + 1;
-        return MathProblem('$left × $right =', '', left * right);
+        return MathProblem(mode, '$left × $right =', '', left * right);
       case PracticeMode.division:
         final divisor = random.nextInt(9) + 1;
         final quotient = random.nextInt(11);
-        return MathProblem('${divisor * quotient} : $divisor =', '', quotient);
+        return MathProblem(
+          mode,
+          '${divisor * quotient} : $divisor =',
+          '',
+          quotient,
+        );
       case PracticeMode.missingFactor:
         final factor = random.nextInt(9) + 1;
         final missing = random.nextInt(11);
-        return MathProblem('$factor ×', '= ${factor * missing}', missing);
+        return MathProblem(mode, '$factor ×', '= ${factor * missing}', missing);
       case PracticeMode.missingDivisor:
         final divisor = random.nextInt(9) + 1;
         final quotient = random.nextInt(10) + 1;
-        return MathProblem('${divisor * quotient} :', '= $quotient', divisor);
+        return MathProblem(
+          mode,
+          '${divisor * quotient} :',
+          '= $quotient',
+          divisor,
+        );
       case PracticeMode.brackets:
         final addInside = random.nextBool();
         final addOutside = random.nextBool();
@@ -67,6 +104,7 @@ class MathProblem {
         final innerSign = addInside ? '+' : '−';
         final outerSign = addOutside ? '+' : '−';
         return MathProblem(
+          mode,
           '$outside $outerSign ($left $innerSign $right) =',
           '',
           answer,

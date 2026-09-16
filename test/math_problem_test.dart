@@ -4,6 +4,24 @@ import 'package:aaaskola/math_problem.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('mix covers every type in each round without adjacent repeats', () {
+    for (var seed = 0; seed < 20; seed++) {
+      final practice = MixedPractice(random: Random(seed));
+      MathProblem? previous;
+      for (var round = 0; round < 20; round++) {
+        final modes = <PracticeMode>{};
+        for (var index = 0; index < PracticeMode.values.length; index++) {
+          final problem = practice.next();
+          expect(problem.mode, isNot(previous?.mode));
+          expect(problem.question, isNot(previous?.question));
+          modes.add(problem.mode);
+          previous = problem;
+        }
+        expect(modes, unorderedEquals(PracticeMode.values));
+      }
+    }
+  });
+
   for (final mode in PracticeMode.values) {
     test('${mode.name}: generated equations are valid and do not repeat', () {
       final random = Random(2026);
@@ -12,6 +30,7 @@ void main() {
       final signs = <String>{};
       for (var index = 0; index < 2000; index++) {
         final problem = MathProblem.next(mode, random, previous: previous);
+        expect(problem.mode, mode);
         expect(problem.question, isNot(previous?.question));
         expect(problem.answer, inInclusiveRange(0, 100));
         answers.add(problem.answer);

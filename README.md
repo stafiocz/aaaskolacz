@@ -7,7 +7,7 @@ Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
-V nabídce **Co si procvičíme?** lze vybrat:
+Procvičování automaticky míchá všechny typy příkladů:
 
 - **Násobilka:** násobení čísel 1–9.
 - **Dělení:** dělení beze zbytku, dělitel 1–9, výsledek 0–10.
@@ -17,13 +17,15 @@ V nabídce **Co si procvičíme?** lze vybrat:
 - **Doplň dělení:** například `12 : ? = 4`, chybějící dělitel 1–9.
 
 Každý příklad má jednoznačnou celočíselnou odpověď. Nikdy se nedělí nulou.
+Každá pětice obsahuje všechny typy v náhodném pořadí; stejný typ nenásleduje
+hned po sobě ani na přechodu mezi pěticemi. Oblasti se ručně nevybírají.
 Anglická a německá slovíčka jsou plánovaným rozšířením.
 
 - Náhodný příklad, velká klávesnice na displeji a kontrola odpovědi.
 - Po chybě zůstane stejný příklad; první nová číslice nahradí chybnou odpověď.
 - Po správné odpovědi se zobrazí pochvala a tlačítko **Další příklad**.
 - Počítadlo vyřešených příkladů platí pro aktuální spuštění napříč typy cvičení.
-- Změna typu cvičení vybere nový příklad a vymaže rozepsanou odpověď.
+- Další příklad automaticky změní typ cvičení a vymaže předchozí odpověď.
 - **C** smaže celou odpověď, **⌫** poslední číslici.
 - Fungují také číslice na fyzické klávesnici, Enter, Backspace a Delete/Escape.
 

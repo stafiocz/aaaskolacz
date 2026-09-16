@@ -44,16 +44,9 @@ int result(WidgetTester tester) {
       : factors[0] ~/ factors[1];
 }
 
-Future<void> chooseMode(WidgetTester tester, PracticeMode mode) async {
-  final selector = find.byKey(const ValueKey('practice-mode'));
-  await tester.ensureVisible(selector);
-  await tester.tap(selector);
-  await tester.pumpAndSettle();
-  final option = find.text(mode.label).last;
-  await tester.ensureVisible(option);
-  await tester.tap(option);
-  await tester.pumpAndSettle();
-}
+PracticeMode modeAt(WidgetTester tester) => PracticeMode.values.singleWhere(
+  (mode) => find.text(mode.heading).evaluate().isNotEmpty,
+);
 
 Future<void> answerCorrectly(WidgetTester tester) async {
   for (final digit in result(tester).toString().split('')) {
@@ -64,7 +57,7 @@ Future<void> answerCorrectly(WidgetTester tester) async {
 
 void main() {
   testWidgets(
-    'screen keypad edits a two-digit answer and rejects empty input',
+    'screen keypad edits a three-digit answer and rejects empty input',
     (tester) async {
       await tester.pumpWidget(const AaaSkolaApp());
       expect(
@@ -74,14 +67,17 @@ void main() {
         isNull,
       );
       expect(find.byType(TextField), findsNothing);
+      expect(find.byKey(const ValueKey('practice-mode')), findsNothing);
+      expect(find.text('MIX'), findsOneWidget);
       await key(tester, '0');
       await key(tester, '4');
       expect(textAt(tester, 'answer'), '4');
       await key(tester, '2');
       await key(tester, '7');
-      expect(textAt(tester, 'answer'), '42');
+      await key(tester, '9');
+      expect(textAt(tester, 'answer'), '427');
       await key(tester, '⌫');
-      expect(textAt(tester, 'answer'), '4');
+      expect(textAt(tester, 'answer'), '42');
       await key(tester, 'C');
       await key(tester, '⌫');
       expect(textAt(tester, 'answer'), '?');
@@ -93,7 +89,7 @@ void main() {
     (tester) async {
       await tester.pumpWidget(const AaaSkolaApp());
       final original = textAt(tester, 'problem');
-      await key(tester, '0');
+      await key(tester, result(tester) == 0 ? '1' : '0');
       await submit(tester);
       expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
       expect(textAt(tester, 'problem'), original);
@@ -118,16 +114,22 @@ void main() {
   );
 
   testWidgets(
-    'a full practice session keeps factors in range and scores once',
+    'a full mixed practice session covers all types and scores once',
     (tester) async {
       await tester.pumpWidget(const AaaSkolaApp());
+      final modes = <PracticeMode>{};
       for (var count = 1; count <= 25; count++) {
         final original = textAt(tester, 'problem');
+        modes.add(modeAt(tester));
         await answerCorrectly(tester);
         expect(textAt(tester, 'score'), 'Správně: $count');
         await submit(tester);
         expect(textAt(tester, 'problem'), isNot(original));
         expect(textAt(tester, 'answer'), '?');
+        if (count % 5 == 0) {
+          expect(modes, unorderedEquals(PracticeMode.values));
+          modes.clear();
+        }
       }
     },
   );
@@ -145,19 +147,25 @@ void main() {
     await tester.pump();
     expect(textAt(tester, 'answer'), '4');
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.sendKeyEvent(LogicalKeyboardKey.digit0, character: '0');
+    final wrongAnswer = result(tester) == 0 ? '1' : '0';
+    await tester.sendKeyEvent(
+      wrongAnswer == '1'
+          ? LogicalKeyboardKey.digit1
+          : LogicalKeyboardKey.digit0,
+      character: wrongAnswer,
+    );
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
   });
 
-  testWidgets('all modes check answers and reset feedback when switching', (
+  testWidgets('mixed problems check answers and reset feedback automatically', (
     tester,
   ) async {
     await tester.pumpWidget(const AaaSkolaApp());
     var count = 0;
-    for (final mode in PracticeMode.values) {
-      await chooseMode(tester, mode);
+    for (var index = 0; index < 10; index++) {
+      final mode = modeAt(tester);
       expect(textAt(tester, 'answer'), '?');
       expect(find.text('Výborně! To je správně.'), findsNothing);
       expect(find.text(mode.heading), findsOneWidget);
@@ -173,28 +181,26 @@ void main() {
       expect(find.text('Výborně! To je správně.'), findsOneWidget);
       expect(textAt(tester, 'score'), 'Správně: ${++count}');
       await submit(tester);
-      final newSuffix = mode.hasMissingNumber
+      final newSuffix = modeAt(tester).hasMissingNumber
           ? textAt(tester, 'problem-suffix')
           : '';
       expect(
         '${textAt(tester, 'problem')}$newSuffix',
         isNot('$original$suffix'),
       );
-      await answerCorrectly(tester);
-      count++;
+      expect(modeAt(tester), isNot(mode));
     }
   });
 
-  testWidgets('brackets accept 100 and switching clears a partial answer', (
+  testWidgets('mixed practice accepts answers up to three digits', (
     tester,
   ) async {
     await tester.pumpWidget(const AaaSkolaApp());
-    await chooseMode(tester, PracticeMode.brackets);
     for (final digit in ['1', '0', '0', '9']) {
       await key(tester, digit);
     }
     expect(textAt(tester, 'answer'), '100');
-    await chooseMode(tester, PracticeMode.missingFactor);
+    await key(tester, 'C');
     expect(textAt(tester, 'answer'), '?');
     await tester.sendKeyEvent(LogicalKeyboardKey.digit7, character: '7');
     await tester.pump();
@@ -212,8 +218,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const AaaSkolaApp());
-      for (final mode in PracticeMode.values) {
-        await chooseMode(tester, mode);
+      for (var index = 0; index < PracticeMode.values.length; index++) {
         await answerCorrectly(tester);
         expect(find.text('Výborně! To je správně.'), findsOneWidget);
         await submit(tester);

@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -42,19 +40,20 @@ class PracticePage extends StatefulWidget {
 }
 
 class _PracticePageState extends State<PracticePage> {
-  final _random = Random();
+  final _practice = MixedPractice();
   final _keyboardFocus = FocusNode();
-  PracticeMode _mode = PracticeMode.multiplication;
   late MathProblem _problem;
   String _answer = '';
   bool _incorrect = false;
   bool _solved = false;
   int _correctCount = 0;
 
+  PracticeMode get _mode => _problem.mode;
+
   @override
   void initState() {
     super.initState();
-    _problem = MathProblem.next(_mode, _random);
+    _problem = _practice.next();
   }
 
   @override
@@ -68,8 +67,7 @@ class _PracticePageState extends State<PracticePage> {
     setState(() {
       if (_incorrect || _answer == '0') _answer = '';
       _incorrect = false;
-      final maxDigits = _mode == PracticeMode.brackets ? 3 : 2;
-      if (_answer.length < maxDigits) _answer += digit;
+      if (_answer.length < 3) _answer += digit;
     });
   }
 
@@ -86,7 +84,7 @@ class _PracticePageState extends State<PracticePage> {
   void _submit() {
     if (_solved) {
       setState(() {
-        _problem = MathProblem.next(_mode, _random, previous: _problem);
+        _problem = _practice.next();
         _answer = '';
         _incorrect = false;
         _solved = false;
@@ -98,18 +96,6 @@ class _PracticePageState extends State<PracticePage> {
         if (_solved) _correctCount++;
       });
     }
-  }
-
-  void _changeMode(PracticeMode? mode) {
-    if (mode == null || mode == _mode) return;
-    setState(() {
-      _mode = mode;
-      _problem = MathProblem.next(_mode, _random);
-      _answer = '';
-      _incorrect = false;
-      _solved = false;
-    });
-    _keyboardFocus.requestFocus();
   }
 
   KeyEventResult _onKey(FocusNode node, KeyEvent event) {
@@ -235,9 +221,9 @@ class _PracticePageState extends State<PracticePage> {
                                 color: const Color(0xFFE3EBDD),
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              child: Text(
-                                _mode.range,
-                                style: const TextStyle(
+                              child: const Text(
+                                'MIX',
+                                style: TextStyle(
                                   color: _green,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -253,28 +239,6 @@ class _PracticePageState extends State<PracticePage> {
                           ),
                         ],
                         SizedBox(height: compact ? 16 : 26),
-                        DropdownButtonFormField<PracticeMode>(
-                          key: const ValueKey('practice-mode'),
-                          initialValue: _mode,
-                          isExpanded: true,
-                          decoration: InputDecoration(
-                            labelText: 'Co si procvičíme?',
-                            filled: true,
-                            fillColor: Colors.white,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          items: [
-                            for (final mode in PracticeMode.values)
-                              DropdownMenuItem(
-                                value: mode,
-                                child: Text(mode.label),
-                              ),
-                          ],
-                          onChanged: _changeMode,
-                        ),
-                        const SizedBox(height: 16),
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           padding: EdgeInsets.all(compact ? 16 : 24),
