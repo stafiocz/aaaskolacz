@@ -13,8 +13,6 @@ on:
       DOCKER_PASS:
         required: true
     outputs:
-      image:
-        value: ${{ jobs.build.outputs.image }}
       digest:
         value: ${{ jobs.build.outputs.digest }}
 
@@ -26,7 +24,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
-      image: ${{ steps.source.outputs.image }}
       digest: ${{ steps.push.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
@@ -93,11 +90,11 @@ jobs:
           with urllib.request.urlopen(base + 'release.json') as response:
               assert json.load(response)['source'] == os.environ['SOURCE']
           for path in Path('build/web').rglob('*'):
-              if path.is_file():
+              if path.is_file() and not any(part.startswith('.') for part in path.relative_to('build/web').parts):
                   url = base + quote(path.relative_to('build/web').as_posix())
                   with urllib.request.urlopen(url) as response:
                       assert response.read() == path.read_bytes(), str(path)
-          for path in ['.git/config', 'Dockerfile', 'pubspec.yaml', 'missing.js']:
+          for path in ['.git/config', '.last_build_id', 'Dockerfile', 'pubspec.yaml', 'missing.js']:
               try:
                   urllib.request.urlopen(base + path)
               except urllib.error.HTTPError as error:
