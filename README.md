@@ -7,13 +7,23 @@ Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
-První verze procvičuje násobení čísel 1–9. Anglická a německá slovíčka
-jsou plánovaným rozšířením.
+V nabídce **Co si procvičíme?** lze vybrat:
+
+- **Násobilka:** násobení čísel 1–9.
+- **Dělení:** dělení beze zbytku, dělitel 1–9, výsledek 0–10.
+- **Závorky:** sčítání a odčítání do 100, například `59 − (23 + 7) = ?`.
+  Čísla, mezivýsledek i výsledek jsou nezáporné a nejvýše 100.
+- **Doplň násobení:** například `7 × ? = 21`, chybějící číslo 0–10.
+- **Doplň dělení:** například `12 : ? = 4`, chybějící dělitel 1–9.
+
+Každý příklad má jednoznačnou celočíselnou odpověď. Nikdy se nedělí nulou.
+Anglická a německá slovíčka jsou plánovaným rozšířením.
 
 - Náhodný příklad, velká klávesnice na displeji a kontrola odpovědi.
 - Po chybě zůstane stejný příklad; první nová číslice nahradí chybnou odpověď.
 - Po správné odpovědi se zobrazí pochvala a tlačítko **Další příklad**.
-- Počítadlo vyřešených příkladů platí pro aktuální spuštění.
+- Počítadlo vyřešených příkladů platí pro aktuální spuštění napříč typy cvičení.
+- Změna typu cvičení vybere nový příklad a vymaže rozepsanou odpověď.
 - **C** smaže celou odpověď, **⌫** poslední číslici.
 - Fungují také číslice na fyzické klávesnici, Enter, Backspace a Delete/Escape.
 

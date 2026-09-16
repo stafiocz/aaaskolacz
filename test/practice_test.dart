@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aaaskola/main.dart';
+import 'package:aaaskola/math_problem.dart';
 
 String textAt(WidgetTester tester, String key) =>
     tester.widget<Text>(find.byKey(ValueKey(key))).data!;
@@ -21,13 +22,37 @@ Future<void> submit(WidgetTester tester) async {
 }
 
 int result(WidgetTester tester) {
-  final factors = RegExp(r'\d+')
-      .allMatches(textAt(tester, 'problem'))
-      .map((match) => int.parse(match.group(0)!))
-      .toList();
-  expect(factors, hasLength(2));
-  expect(factors.every((value) => value >= 1 && value <= 9), isTrue);
-  return factors[0] * factors[1];
+  final question = textAt(tester, 'problem');
+  final factors = RegExp(
+    r'\d+',
+  ).allMatches(question).map((match) => int.parse(match.group(0)!)).toList();
+  if (find.byKey(const ValueKey('problem-suffix')).evaluate().isNotEmpty) {
+    final value = int.parse(textAt(tester, 'problem-suffix').substring(2));
+    return question.contains('×') ? value ~/ factors[0] : factors[0] ~/ value;
+  }
+  if (question.contains('(')) {
+    final signs = RegExp(
+      r'[+−]',
+    ).allMatches(question).map((m) => m[0]).toList();
+    final inner = signs[1] == '+'
+        ? factors[1] + factors[2]
+        : factors[1] - factors[2];
+    return signs[0] == '+' ? factors[0] + inner : factors[0] - inner;
+  }
+  return question.contains('×')
+      ? factors[0] * factors[1]
+      : factors[0] ~/ factors[1];
+}
+
+Future<void> chooseMode(WidgetTester tester, PracticeMode mode) async {
+  final selector = find.byKey(const ValueKey('practice-mode'));
+  await tester.ensureVisible(selector);
+  await tester.tap(selector);
+  await tester.pumpAndSettle();
+  final option = find.text(mode.label).last;
+  await tester.ensureVisible(option);
+  await tester.tap(option);
+  await tester.pumpAndSettle();
 }
 
 Future<void> answerCorrectly(WidgetTester tester) async {
@@ -126,6 +151,56 @@ void main() {
     expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
   });
 
+  testWidgets('all modes check answers and reset feedback when switching', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const AaaSkolaApp());
+    var count = 0;
+    for (final mode in PracticeMode.values) {
+      await chooseMode(tester, mode);
+      expect(textAt(tester, 'answer'), '?');
+      expect(find.text('Výborně! To je správně.'), findsNothing);
+      expect(find.text(mode.heading), findsOneWidget);
+      final original = textAt(tester, 'problem');
+      final suffix = mode.hasMissingNumber
+          ? textAt(tester, 'problem-suffix')
+          : '';
+      await key(tester, result(tester) == 0 ? '1' : '0');
+      await submit(tester);
+      expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
+      expect(textAt(tester, 'problem'), original);
+      await answerCorrectly(tester);
+      expect(find.text('Výborně! To je správně.'), findsOneWidget);
+      expect(textAt(tester, 'score'), 'Správně: ${++count}');
+      await submit(tester);
+      final newSuffix = mode.hasMissingNumber
+          ? textAt(tester, 'problem-suffix')
+          : '';
+      expect(
+        '${textAt(tester, 'problem')}$newSuffix',
+        isNot('$original$suffix'),
+      );
+      await answerCorrectly(tester);
+      count++;
+    }
+  });
+
+  testWidgets('brackets accept 100 and switching clears a partial answer', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const AaaSkolaApp());
+    await chooseMode(tester, PracticeMode.brackets);
+    for (final digit in ['1', '0', '0', '9']) {
+      await key(tester, digit);
+    }
+    expect(textAt(tester, 'answer'), '100');
+    await chooseMode(tester, PracticeMode.missingFactor);
+    expect(textAt(tester, 'answer'), '?');
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit7, character: '7');
+    await tester.pump();
+    expect(textAt(tester, 'answer'), '7');
+  });
+
   for (final size in [
     const Size(320, 568),
     const Size(390, 844),
@@ -137,9 +212,12 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const AaaSkolaApp());
-      await answerCorrectly(tester);
-      expect(find.text('Výborně! To je správně.'), findsOneWidget);
-      await submit(tester);
+      for (final mode in PracticeMode.values) {
+        await chooseMode(tester, mode);
+        await answerCorrectly(tester);
+        expect(find.text('Výborně! To je správně.'), findsOneWidget);
+        await submit(tester);
+      }
       expect(tester.takeException(), isNull);
     });
   }
