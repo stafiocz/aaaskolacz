@@ -43,3 +43,51 @@ flutter build apk --debug
 
 Webový výstup vzniká v `build/web`, Android APK v
 `build/app/outputs/flutter-apk/app-debug.apk`.
+
+## Docker Swarm
+
+Produkční web běží na **https://aaaskola.cz/** ve stacku `products-aaaskola`,
+služba `products-aaaskola_web`. Kontejner nginx poslouchá na portu 8080;
+HTTPS a certifikát Let's Encrypt zajišťuje společný Traefik přes síť `servers`.
+DNS záznam A pro `aaaskola.cz` musí směřovat na `77.78.90.63`.
+
+Sestavení používá Flutter **3.44.8** a image `stafio/aaaskolacz:sha-<commit>`.
+Workflow v tomto repozitáři kontroluje kód, testy i všechny soubory obsluhované
+kontejnerem. Volá se z infrastrukturního repozitáře, kde jsou uloženy přístupy
+k Docker Hubu a Swarmu.
+
+### Vydání
+
+1. Commitněte a pushněte zdroje do `main` a zjistěte celé SHA commitu.
+2. V repozitáři [infrsastructure-ds](https://github.com/stafiocz/infrsastructure-ds)
+   nastavte v `products/aaaskola.yml` image `stafio/aaaskolacz:sha-<commit>`.
+   Commitněte a pushněte s `[no-ticket] [skip ci]` — sestavení zajistí další krok.
+3. Spusťte workflow **Release AAA skola** s parametrem `source` nastaveným na SHA:
+
+   ```powershell
+   gh workflow run release-aaaskola.yml -R stafiocz/infrsastructure-ds -f source=<cele-SHA>
+   ```
+
+Workflow sestaví a ověří image, porovná ji s pinem ve stacku a vydá pouze
+`products-aaaskola`, připnutou na digest. První nasazení i další aktualizace
+používají stejný postup. Služba má kontrolu dostupnosti, při aktualizaci
+nejdřív spustí novou instanci a při selhání provede rollback.
+
+Po vydání ověřte `https://aaaskola.cz/healthz`, SHA v `/release.json`
+a zadání správné i chybné odpovědi v prohlížeči.
+
+### Rollback
+
+Přes existující infrastrukturní workflow `maintenance.yml` spusťte
+`sudo docker service rollback products-aaaskola_web`. Vraťte také pin image
+v `products/aaaskola.yml` a commitněte ho s `[no-ticket] [skip ci]`.
+První nasazení nemá předchozí verzi; případné odstranění se týká pouze
+stacku `products-aaaskola`.
+
+### Lokální kontejner
+
+```powershell
+flutter build web --release --no-web-resources-cdn
+docker build -t aaaskola .
+docker run --rm -p 8080:8080 aaaskola
+```

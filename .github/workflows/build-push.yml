@@ -1,0 +1,122 @@
+name: Build AAA skola image
+
+on:
+  workflow_call:
+    inputs:
+      source:
+        description: Full commit SHA from stafiocz/aaaskolacz
+        required: true
+        type: string
+    secrets:
+      DOCKER_USER:
+        required: true
+      DOCKER_PASS:
+        required: true
+    outputs:
+      image:
+        value: ${{ jobs.build.outputs.image }}
+      digest:
+        value: ${{ jobs.build.outputs.digest }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      image: ${{ steps.source.outputs.image }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: stafiocz/aaaskolacz
+          ref: ${{ inputs.source }}
+
+      - name: Verify source
+        id: source
+        env:
+          SOURCE: ${{ inputs.source }}
+        run: |
+          [[ "$SOURCE" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$SOURCE"
+          echo "image=stafio/aaaskolacz:sha-$SOURCE" >> "$GITHUB_OUTPUT"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+
+      - name: Check and build Flutter web
+        env:
+          SOURCE: ${{ inputs.source }}
+        run: |
+          flutter pub get --enforce-lockfile
+          flutter analyze
+          flutter test
+          flutter build web --release --no-web-resources-cdn
+          printf '{"source":"%s"}\n' "$SOURCE" > build/web/release.json
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build container
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: ${{ steps.source.outputs.image }}
+
+      - name: Check running container
+        env:
+          IMAGE: ${{ steps.source.outputs.image }}
+          SOURCE: ${{ inputs.source }}
+        run: |
+          docker run --rm "$IMAGE" nginx -t
+          docker run -d --name aaaskola -p 127.0.0.1:8080:8080 "$IMAGE"
+          trap 'docker logs aaaskola; docker rm -f aaaskola' EXIT
+          for attempt in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8080/healthz >/dev/null && break
+            sleep 1
+          done
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+          from urllib.parse import quote
+
+          base = 'http://127.0.0.1:8080/'
+          with urllib.request.urlopen(base + 'release.json') as response:
+              assert json.load(response)['source'] == os.environ['SOURCE']
+          for path in Path('build/web').rglob('*'):
+              if path.is_file():
+                  url = base + quote(path.relative_to('build/web').as_posix())
+                  with urllib.request.urlopen(url) as response:
+                      assert response.read() == path.read_bytes(), str(path)
+          for path in ['.git/config', 'Dockerfile', 'pubspec.yaml', 'missing.js']:
+              try:
+                  urllib.request.urlopen(base + path)
+              except urllib.error.HTTPError as error:
+                  assert error.code == 404, (path, error.code)
+              else:
+                  raise AssertionError(path)
+          print('All Flutter web files match the container; private files return 404.')
+          PY
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASS }}
+
+      - name: Push verified image
+        id: push
+        env:
+          IMAGE: ${{ steps.source.outputs.image }}
+        run: |
+          docker push "$IMAGE"
+          DIGEST=$(docker image inspect --format '{{index .RepoDigests 0}}' "$IMAGE")
+          echo "digest=${DIGEST#*@}" >> "$GITHUB_OUTPUT"
