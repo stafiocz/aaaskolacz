@@ -3,27 +3,34 @@
 Zobrazovaný název značky je **AAA škola**. Doména a technický identifikátor
 zůstávají `aaaskola.cz` a `aaaskola`.
 
-Ikona propojuje usměvavou zlatou hvězdičku s otevřenou knihou, na jejíchž
-stránkách jsou tři výrazná písmena **AAA**. Wordmark používá kulaté písmo Nunito;
+Ikona zobrazuje budovu školy s hodinami a výrazným nápisem **AAA**, otevřenou
+učebnici **ABC / 123** a menší usměvavou zlatou hvězdičku. Wordmark používá kulaté písmo Nunito;
 tři A mají tmavě zelenou, světlejší zelenou a zlatou barvu, slovo „škola“ je tmavé.
 Písmo se dodává lokálně spolu s aplikací a licencí SIL OFL v `assets/fonts/OFL.txt`.
 Zdroj písma: https://github.com/google/fonts/tree/main/ofl/nunito.
 
 ## Soubory
 
-- `aaaskola-icon-v2-source.png`: upravený originál z imagegen.
-- `aaaskola-icon-v2.png`: aktuální ikona 1024 × 1024 px.
-- `aaaskola-icon-v2-128.png`: aktuální ikona v záhlaví aplikace.
-- `aaaskola-icon-v2-preview.png`: náhled 256 × 256 px.
+- `aaaskola-icon-v3-source.png`: upravený originál z imagegen.
+- `aaaskola-icon-v3.png`: aktuální ikona 1024 × 1024 px.
+- `aaaskola-icon-v3-128.png`: aktuální ikona v záhlaví aplikace.
+- `aaaskola-icon-v3-preview.png`: náhled 256 × 256 px.
+- `aaaskola-icon-v3-prompt.txt`: přesný editační prompt pro verzi 3.
 - `aaaskola-wordmark.svg` a `.png`: samostatný stylizovaný nápis.
 - `aaaskola-logo.svg` a `.png`: kompletní logo s ikonou a nápisem.
 - SVG obsahují písmo převedené na křivky; kompletní logo má obrázek vložený přímo uvnitř.
-- Původní soubory `aaaskola-icon*.png` bez `v2` zůstávají zachované.
+- Původní ikony včetně verze 2 zůstávají zachované.
 - Platformní velikosti jsou vyexportované do `android/app/src/main/res/`, `ios/Runner/Assets.xcassets/AppIcon.appiconset/` a `web/`.
 
 ## Vytvoření
 
 Použit vestavěný nástroj `image_gen`, nikoli API/CLI. Platformní kopie vznikly pouze změnou rozměrů, bez dalších výtvarných úprav.
+
+### Školní motiv (verze 3)
+
+Editační předloha: `aaaskola-icon-v2.png`. Nová verze staví do popředí školní
+budovu a učebnici: písmena připomínají jazyky, čísla počítání. Hvězdička zůstává
+menším maskotem. [Přesný prompt](aaaskola-icon-v3-prompt.txt).
 
 ### Původní generační prompt před přejmenováním aplikace
 

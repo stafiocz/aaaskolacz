@@ -1,8 +1,8 @@
 # AAA škola
 
 Samostatná Flutter aplikace pro hravé procvičování počítání a cizích jazyků.
-Ikonu tvoří usměvavá zlatá hvězdička nad otevřenou knihou s písmeny AAA
-na zeleném pozadí. Název se zobrazuje jako **AAA škola** v kulatém písmu
+Ikonu tvoří budova školy s hodinami a nápisem AAA, otevřená učebnice ABC / 123
+a usměvavá zlatá hvězdička na zeleném pozadí. Název se zobrazuje jako **AAA škola** v kulatém písmu
 Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).

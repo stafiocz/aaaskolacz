@@ -154,7 +154,7 @@ class _PracticePageState extends State<PracticePage> {
                             ClipRRect(
                               borderRadius: BorderRadius.circular(14),
                               child: Image.asset(
-                                'assets/branding/aaaskola-icon-v2-128.png',
+                                'assets/branding/aaaskola-icon-v3-128.png',
                                 width: 42,
                                 height: 42,
                                 excludeFromSemantics: true,

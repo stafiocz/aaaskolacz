@@ -19,7 +19,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/branding/aaaskola-icon-v2-128.png
+    - assets/branding/aaaskola-icon-v3-128.png
     - assets/fonts/OFL.txt
   fonts:
     - family: Nunito
