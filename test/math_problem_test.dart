@@ -10,19 +10,19 @@ void main() {
       MathProblem? previous;
       for (var round = 0; round < 20; round++) {
         final modes = <PracticeMode>{};
-        for (var index = 0; index < PracticeMode.values.length; index++) {
+        for (var index = 0; index < grade3Modes.length; index++) {
           final problem = practice.next();
           expect(problem.mode, isNot(previous?.mode));
           expect(problem.question, isNot(previous?.question));
           modes.add(problem.mode);
           previous = problem;
         }
-        expect(modes, unorderedEquals(PracticeMode.values));
+        expect(modes, unorderedEquals(grade3Modes));
       }
     }
   });
 
-  for (final mode in PracticeMode.values) {
+  for (final mode in grade3Modes) {
     test('${mode.name}: generated equations are valid and do not repeat', () {
       final random = Random(2026);
       MathProblem? previous;
@@ -81,6 +81,8 @@ void main() {
               match[2] == '+' ? numbers[0] + inside : numbers[0] - inside,
               numbers[3],
             );
+          default:
+            fail('Unexpected mode for grade 3: $mode');
         }
         previous = problem;
       }

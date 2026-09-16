@@ -33,9 +33,11 @@ class AaaSkolaApp extends StatelessWidget {
       routes: {
         '/': (_) => const HomePage(),
         '/7-trida': (_) => const GradePage(grade: 7),
+        '/5-trida': (_) => const GradePage(grade: 5),
         '/3-trida': (_) => const GradePage(grade: 3),
         '/7-trida/anglictina': (_) => const EnglishPage(),
         '/3-trida/matematika': (_) => const PracticePage(),
+        '/5-trida/matematika': (_) => const PracticePage(grade: 5),
         '/3-trida/anglictina': (_) => const EnglishPage(
           grade: 3,
           entries: vocabularyGrade3,
@@ -47,14 +49,16 @@ class AaaSkolaApp extends StatelessWidget {
 }
 
 class PracticePage extends StatefulWidget {
-  const PracticePage({super.key});
+  const PracticePage({super.key, this.grade = 3});
+
+  final int grade;
 
   @override
   State<PracticePage> createState() => _PracticePageState();
 }
 
 class _PracticePageState extends State<PracticePage> {
-  final _practice = MixedPractice();
+  late final _practice = MixedPractice(grade: widget.grade);
   final _keyboardFocus = FocusNode();
   late MathProblem _problem;
   String _answer = '';
@@ -81,7 +85,7 @@ class _PracticePageState extends State<PracticePage> {
     setState(() {
       if (_incorrect || _answer == '0') _answer = '';
       _incorrect = false;
-      if (_answer.length < 3) _answer += digit;
+      if (_answer.length < (widget.grade == 5 ? 7 : 3)) _answer += digit;
     });
   }
 
@@ -98,7 +102,7 @@ class _PracticePageState extends State<PracticePage> {
   void _submit() {
     if (_solved) {
       setState(() {
-        _problem = _practice.next();
+        _problem = _problem.nextStep ?? _practice.next();
         _answer = '';
         _incorrect = false;
         _solved = false;
@@ -107,7 +111,7 @@ class _PracticePageState extends State<PracticePage> {
       setState(() {
         _solved = int.parse(_answer) == _problem.answer;
         _incorrect = !_solved;
-        if (_solved) _correctCount++;
+        if (_solved && _problem.nextStep == null) _correctCount++;
       });
     }
   }
@@ -139,6 +143,8 @@ class _PracticePageState extends State<PracticePage> {
         ? 'Výborně! To je správně.'
         : _incorrect
         ? 'To ještě není ono. Zkus to znovu.'
+        : _problem.instruction != null
+        ? _problem.instruction!
         : _mode.hasMissingNumber
         ? 'Doplň chybějící číslo a potvrď ho.'
         : _mode == PracticeMode.brackets
@@ -171,7 +177,7 @@ class _PracticePageState extends State<PracticePage> {
                           child: TextButton.icon(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.arrow_back_rounded),
-                            label: const Text('Matematika · 3. třída'),
+                            label: Text('Matematika · ${widget.grade}. třída'),
                           ),
                         ),
                         Row(
@@ -302,74 +308,49 @@ class _PracticePageState extends State<PracticePage> {
                                 ],
                               ),
                               SizedBox(height: compact ? 16 : 22),
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.center,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      _problem.beforeAnswer,
-                                      key: const ValueKey('problem'),
-                                      style: const TextStyle(
-                                        fontSize: 46,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Semantics(
-                                      label: _mode.hasMissingNumber
-                                          ? 'Chybějící číslo'
-                                          : 'Tvoje odpověď',
-                                      value: _answer.isEmpty
-                                          ? 'Prázdná'
-                                          : _answer,
-                                      excludeSemantics: true,
-                                      child: Container(
-                                        width: compact ? 80 : 96,
-                                        height: compact ? 64 : 76,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: _incorrect
-                                              ? const Color(0xFFFFF1E7)
-                                              : const Color(0xFFEDF5EE),
-                                          borderRadius: BorderRadius.circular(
-                                            18,
-                                          ),
-                                          border: Border.all(
-                                            color: _incorrect
-                                                ? const Color(0xFFDAA078)
-                                                : const Color(0xFFB8D6BF),
-                                            width: 1.5,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          _answer.isEmpty ? '?' : _answer,
-                                          key: const ValueKey('answer'),
-                                          style: TextStyle(
-                                            color: _answer.isEmpty
-                                                ? const Color(0xFF95B69E)
-                                                : statusColor,
-                                            fontSize: 38,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    if (_problem.afterAnswer.isNotEmpty) ...[
-                                      const SizedBox(width: 12),
+                              if (widget.grade == 5) ...[
+                                Text(
+                                  _problem.question,
+                                  key: const ValueKey('problem'),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                _answerBox(statusColor, compact),
+                              ] else
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
                                       Text(
-                                        _problem.afterAnswer,
-                                        key: const ValueKey('problem-suffix'),
+                                        _problem.beforeAnswer,
+                                        key: const ValueKey('problem'),
                                         style: const TextStyle(
                                           fontSize: 46,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
+                                      const SizedBox(width: 12),
+                                      _answerBox(statusColor, compact),
+                                      if (_problem.afterAnswer.isNotEmpty) ...[
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          _problem.afterAnswer,
+                                          key: const ValueKey('problem-suffix'),
+                                          style: const TextStyle(
+                                            fontSize: 46,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
-                              ),
                               SizedBox(height: compact ? 14 : 20),
                               Semantics(
                                 liveRegion: true,
@@ -387,6 +368,18 @@ class _PracticePageState extends State<PracticePage> {
                                   ),
                                 ),
                               ),
+                              if (_solved && _problem.verification != null) ...[
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Zkouška: ${_problem.verification}',
+                                  key: const ValueKey('verification'),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: _green,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -440,7 +433,11 @@ class _PracticePageState extends State<PracticePage> {
                             size: 23,
                           ),
                           label: Text(
-                            _solved ? 'Další příklad' : 'Zkontrolovat',
+                            !_solved
+                                ? 'Zkontrolovat'
+                                : _problem.nextStep != null
+                                ? 'Další krok'
+                                : 'Další příklad',
                           ),
                           style: FilledButton.styleFrom(
                             backgroundColor: _green,
@@ -474,6 +471,48 @@ class _PracticePageState extends State<PracticePage> {
       ),
     );
   }
+
+  Widget _answerBox(Color statusColor, bool compact) => Semantics(
+    label: _problem.afterAnswer.isNotEmpty
+        ? 'Chybějící číslo'
+        : 'Tvoje odpověď',
+    value: _answer.isEmpty ? 'Prázdná' : _answer,
+    excludeSemantics: true,
+    child: Container(
+      width: widget.grade == 5
+          ? double.infinity
+          : compact
+          ? 80
+          : 96,
+      height: compact ? 64 : 76,
+      padding: EdgeInsets.symmetric(horizontal: widget.grade == 5 ? 12 : 0),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: _incorrect ? const Color(0xFFFFF1E7) : const Color(0xFFEDF5EE),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: _incorrect ? const Color(0xFFDAA078) : const Color(0xFFB8D6BF),
+          width: 1.5,
+        ),
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          _answer.isEmpty
+              ? '?'
+              : widget.grade == 5
+              ? formatMathNumber(int.parse(_answer))
+              : _answer,
+          key: const ValueKey('answer'),
+          style: TextStyle(
+            color: _answer.isEmpty ? const Color(0xFF95B69E) : statusColor,
+            fontSize: 38,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+    ),
+  );
 }
 
 class _KeyButton extends StatelessWidget {

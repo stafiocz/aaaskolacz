@@ -7,7 +7,8 @@ Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
-Na úvodu je rozcestník **7. třída → Angličtina** a **3. třída → Matematika / Angličtina**.
+Na úvodu je rozcestník **7. třída → Angličtina**, **5. třída → Matematika**
+a **3. třída → Matematika / Angličtina**.
 Z předmětu se lze vrátit na výběr předmětů a tříd.
 
 ## 3. třída — Matematika
@@ -32,6 +33,25 @@ hned po sobě ani na přechodu mezi pěticemi. Oblasti se ručně nevybírají.
 - Další příklad automaticky změní typ cvičení a vymaže předchozí odpověď.
 - **C** smaže celou odpověď, **⌫** poslední číslici.
 - Fungují také číslice na fyzické klávesnici, Enter, Backspace a Delete/Escape.
+
+## 5. třída — Matematika
+
+Mix na `/#/5-trida/matematika` vychází z fotografií pracovního sešitu
+**Miliony – opakování**, strany 4–8. Generuje nové příklady podobné obtížnosti:
+
+- Sčítání a odčítání stovek, tisíců a milionů, nejvýše do 9 000 000.
+  Po správné odpovědi se zobrazí zkouška opačnou operací.
+- Násobení jednociferným číslem, včetně dvojciferných čísel a násobků deseti
+  do 1 200. Dělení jednociferným číslem beze zbytku s podílem do 99.
+- Násobení a dělení čísly 10, 100 a 1 000 i dalšími násobky deseti.
+- Doplňování činitelů, dělence, dělitele a podílu. Pokyn pojmenuje hledané číslo.
+- Početní řetězce se dvěma navazujícími kroky. Body se přičítají až za celý
+  dokončený řetězec; chyba ponechá dítě u stejného kroku.
+
+V každé osmici se vystřídá všech osm typů, stejný typ nejde dvakrát za sebou.
+Všechny výsledky jsou nezáporná celá čísla, dělení je přesné a bez nulového
+dělitele. Čísla mají oddělené tisíce; klávesnice na displeji i fyzická klávesnice
+přijmou až sedm číslic. Procvičování 3. třídy si ponechává vlastní rozsahy a mix.
 
 ## 3. třída — Angličtina
 

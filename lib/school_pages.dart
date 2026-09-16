@@ -28,6 +28,12 @@ class HomePage extends StatelessWidget {
         onTap: () => Navigator.pushNamed(context, '/7-trida'),
       ),
       LessonCard(
+        title: '5. třída',
+        subtitle: 'Matematika · počítání s velkými čísly',
+        icon: Icons.calculate_outlined,
+        onTap: () => Navigator.pushNamed(context, '/5-trida'),
+      ),
+      LessonCard(
         title: '3. třída',
         subtitle: 'Matematika a angličtina',
         icon: Icons.calculate_outlined,
@@ -52,22 +58,26 @@ class GradePage extends StatelessWidget {
           style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 24),
-        if (grade == 3)
+        if (grade == 3 || grade == 5)
           LessonCard(
             title: 'Matematika',
-            subtitle:
-                'Násobilka, dělení, závorky a doplňování čísel. Vše v jednom mixu.',
+            subtitle: grade == 5
+                ? 'Miliony · sčítání, odčítání, násobení, dělení a početní řetězce. Vše v jednom mixu.'
+                : 'Násobilka, dělení, závorky a doplňování čísel. Vše v jednom mixu.',
             icon: Icons.calculate_outlined,
-            onTap: () => Navigator.pushNamed(context, '/3-trida/matematika'),
+            onTap: () =>
+                Navigator.pushNamed(context, '/$grade-trida/matematika'),
           ),
-        LessonCard(
-          title: 'Angličtina',
-          subtitle: grade == 7
-              ? 'Introduction · New friends a The exchange students. Kartičky a zkoušení slovíček.'
-              : 'Introduction a Me! · Škola, barvy, rodina a další slovíčka z učebnice. Kartičky a zkoušení.',
-          icon: Icons.translate_rounded,
-          onTap: () => Navigator.pushNamed(context, '/$grade-trida/anglictina'),
-        ),
+        if (grade == 3 || grade == 7)
+          LessonCard(
+            title: 'Angličtina',
+            subtitle: grade == 7
+                ? 'Introduction · New friends a The exchange students. Kartičky a zkoušení slovíček.'
+                : 'Introduction a Me! · Škola, barvy, rodina a další slovíčka z učebnice. Kartičky a zkoušení.',
+            icon: Icons.translate_rounded,
+            onTap: () =>
+                Navigator.pushNamed(context, '/$grade-trida/anglictina'),
+          ),
       ],
     );
   }

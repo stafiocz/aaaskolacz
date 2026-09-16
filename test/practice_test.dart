@@ -54,7 +54,7 @@ int result(WidgetTester tester) {
       : factors[0] ~/ factors[1];
 }
 
-PracticeMode modeAt(WidgetTester tester) => PracticeMode.values.singleWhere(
+PracticeMode modeAt(WidgetTester tester) => grade3Modes.singleWhere(
   (mode) => find.text(mode.heading).evaluate().isNotEmpty,
 );
 
@@ -137,7 +137,7 @@ void main() {
         expect(textAt(tester, 'problem'), isNot(original));
         expect(textAt(tester, 'answer'), '?');
         if (count % 5 == 0) {
-          expect(modes, unorderedEquals(PracticeMode.values));
+          expect(modes, unorderedEquals(grade3Modes));
           modes.clear();
         }
       }
@@ -228,7 +228,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       await openMath(tester);
-      for (var index = 0; index < PracticeMode.values.length; index++) {
+      for (var index = 0; index < grade3Modes.length; index++) {
         await answerCorrectly(tester);
         expect(find.text('Výborně! To je správně.'), findsOneWidget);
         await submit(tester);
