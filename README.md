@@ -58,6 +58,20 @@ k Docker Hubu a Swarmu.
 
 ### Vydání
 
+Ze Stafio workspace použijte udržovaný deploy skript:
+
+```powershell
+scripts\aaaskola\deploy.cmd
+```
+
+Parametr `-WhatIf` ověří vstupy bez změn. Skript očekává čistý a pushnutý
+`main` této aplikace v `../aaaskolacz` vedle workspace; jiné umístění přijímá
+přes `-RepoPath`. Připne image, commitne a pushne infrastrukturní konfiguraci,
+počká na Actions a ověří veřejné HTTPS, zdrojové SHA i faviconu.
+[Podrobný postup](https://github.com/stafiocz/stafio-app/blob/main/scripts/aaaskola/README.md).
+
+Ruční postup odpovídající skriptu:
+
 1. Commitněte a pushněte zdroje do `main` a zjistěte celé SHA commitu.
 2. V repozitáři [infrsastructure-ds](https://github.com/stafiocz/infrsastructure-ds)
    nastavte v `products/aaaskola.yml` image `stafio/aaaskolacz:sha-<commit>`.
