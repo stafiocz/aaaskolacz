@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'math_problem.dart';
+import 'english_page.dart';
+import 'school_pages.dart';
 
 void main() => runApp(const AaaSkolaApp());
 
@@ -27,7 +29,13 @@ class AaaSkolaApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const PracticePage(),
+      routes: {
+        '/': (_) => const HomePage(),
+        '/7-trida': (_) => const GradePage(grade: 7),
+        '/3-trida': (_) => const GradePage(grade: 3),
+        '/7-trida/anglictina': (_) => const EnglishPage(),
+        '/3-trida/matematika': (_) => const PracticePage(),
+      },
     );
   }
 }
@@ -152,6 +160,14 @@ class _PracticePageState extends State<PracticePage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.arrow_back_rounded),
+                            label: const Text('Matematika · 3. třída'),
+                          ),
+                        ),
                         Row(
                           children: [
                             ClipRRect(

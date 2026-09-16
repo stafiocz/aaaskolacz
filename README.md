@@ -7,6 +7,11 @@ Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
+Na úvodu je rozcestník **7. třída → Angličtina** a **3. třída → Matematika**.
+Z předmětu se lze vrátit na výběr předmětů a tříd.
+
+## 3. třída — Matematika
+
 Procvičování automaticky míchá všechny typy příkladů:
 
 - **Násobilka:** násobení čísel 1–9.
@@ -19,7 +24,6 @@ Procvičování automaticky míchá všechny typy příkladů:
 Každý příklad má jednoznačnou celočíselnou odpověď. Nikdy se nedělí nulou.
 Každá pětice obsahuje všechny typy v náhodném pořadí; stejný typ nenásleduje
 hned po sobě ani na přechodu mezi pěticemi. Oblasti se ručně nevybírají.
-Anglická a německá slovíčka jsou plánovaným rozšířením.
 
 - Náhodný příklad, velká klávesnice na displeji a kontrola odpovědi.
 - Po chybě zůstane stejný příklad; první nová číslice nahradí chybnou odpověď.
@@ -29,7 +33,27 @@ Anglická a německá slovíčka jsou plánovaným rozšířením.
 - **C** smaže celou odpověď, **⌫** poslední číslici.
 - Fungují také číslice na fyzické klávesnici, Enter, Backspace a Delete/Escape.
 
-Není potřeba účet ani backend. Mobilní aplikace počítá příklady lokálně.
+## 7. třída — Angličtina
+
+Slovíčka a fráze pocházejí z dodaných fotografií stran 4–7, **Introduction A: New
+friends** a **B: The exchange students**. Ruční přepis a české překlady jsou v
+`lib/vocabulary.dart`; u každé položky je téma, zdrojová stránka a případné další
+uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
+
+- Kolo obsahuje nejvýše 8 položek napříč tématy. V rámci návštěvy se postupně
+  projde celý slovník, teprve potom se začne znovu.
+- Kartička ukáže anglický výraz; dítě si vybaví český význam a odhalí překlad.
+- Po kartičkách následuje zkoušení v náhodném pořadí: české zadání a psaná anglická
+  odpověď. Lze také začít rovnou zkoušením.
+- Chyba nebo **Nevím** zobrazí správnou odpověď a vrátí položku za ostatní otázky.
+  Kolo skončí, až dítě všechny výrazy správně napíše. Výsledek ukáže i počet
+  správných odpovědí na první pokus.
+- Kontrola toleruje velká písmena, mezery, spojovníky, typografické apostrofy
+  a koncovou interpunkci; běžné alternativy jsou uvedené přímo ve slovníku.
+- Průběh se uchovává jen při otevřeném procvičování. Obnovení stránky nebo návrat
+  na předměty začne novou návštěvu. Němčina je plánovaným rozšířením.
+
+Není potřeba účet ani backend. Příklady i kontrola slovíček běží lokálně.
 
 ## Spuštění
 

@@ -4,6 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aaaskola/main.dart';
 import 'package:aaaskola/math_problem.dart';
 
+Future<void> openMath(WidgetTester tester) async {
+  await tester.pumpWidget(const AaaSkolaApp());
+  await tester.ensureVisible(find.text('3. třída'));
+  await tester.tap(find.text('3. třída'));
+  await tester.pumpAndSettle();
+  await tester.ensureVisible(find.text('Matematika'));
+  await tester.tap(find.text('Matematika'));
+  await tester.pumpAndSettle();
+}
+
 String textAt(WidgetTester tester, String key) =>
     tester.widget<Text>(find.byKey(ValueKey(key))).data!;
 
@@ -59,7 +69,7 @@ void main() {
   testWidgets(
     'screen keypad edits a three-digit answer and rejects empty input',
     (tester) async {
-      await tester.pumpWidget(const AaaSkolaApp());
+      await openMath(tester);
       expect(
         tester
             .widget<FilledButton>(find.byKey(const ValueKey('submit')))
@@ -87,7 +97,7 @@ void main() {
   testWidgets(
     'incorrect answer can be replaced, success unlocks next problem',
     (tester) async {
-      await tester.pumpWidget(const AaaSkolaApp());
+      await openMath(tester);
       final original = textAt(tester, 'problem');
       await key(tester, result(tester) == 0 ? '1' : '0');
       await submit(tester);
@@ -116,7 +126,7 @@ void main() {
   testWidgets(
     'a full mixed practice session covers all types and scores once',
     (tester) async {
-      await tester.pumpWidget(const AaaSkolaApp());
+      await openMath(tester);
       final modes = <PracticeMode>{};
       for (var count = 1; count <= 25; count++) {
         final original = textAt(tester, 'problem');
@@ -137,7 +147,7 @@ void main() {
   testWidgets('physical keyboard supports digits, erase, and checking', (
     tester,
   ) async {
-    await tester.pumpWidget(const AaaSkolaApp());
+    await openMath(tester);
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.digit4, character: '4');
     await tester.sendKeyEvent(LogicalKeyboardKey.digit2, character: '2');
@@ -162,7 +172,7 @@ void main() {
   testWidgets('mixed problems check answers and reset feedback automatically', (
     tester,
   ) async {
-    await tester.pumpWidget(const AaaSkolaApp());
+    await openMath(tester);
     var count = 0;
     for (var index = 0; index < 10; index++) {
       final mode = modeAt(tester);
@@ -195,7 +205,7 @@ void main() {
   testWidgets('mixed practice accepts answers up to three digits', (
     tester,
   ) async {
-    await tester.pumpWidget(const AaaSkolaApp());
+    await openMath(tester);
     for (final digit in ['1', '0', '0', '9']) {
       await key(tester, digit);
     }
@@ -217,7 +227,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(const AaaSkolaApp());
+      await openMath(tester);
       for (var index = 0; index < PracticeMode.values.length; index++) {
         await answerCorrectly(tester);
         expect(find.text('Výborně! To je správně.'), findsOneWidget);
