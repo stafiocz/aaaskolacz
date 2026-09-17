@@ -1,6 +1,12 @@
 **
 !Dockerfile
-!nginx.conf
+!server/
+!server/*.js
+!server/*.json
+!server/schema.sql
+!server/public/
+!server/public/**
+server/*.test.js
 !build/
 !build/web/
 !build/web/**

@@ -23,6 +23,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73
+        env:
+          POSTGRES_USER: aaaskola_test
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: aaaskola_test
+        ports:
+          - 5432:5432
+        options: --health-cmd "pg_isready -U aaaskola_test" --health-interval 5s --health-timeout 3s --health-retries 10
     outputs:
       digest: ${{ steps.push.outputs.digest }}
     steps:
@@ -45,6 +55,24 @@ jobs:
           flutter-version: '3.44.8'
           channel: stable
           cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Check authentication and database
+        working-directory: server
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: aaaskola_test
+          PGPASSWORD: test-only-password
+          PGDATABASE: aaaskola_test
+        run: |
+          npm ci
+          npm test
 
       - name: Check and build Flutter web
         env:
@@ -71,8 +99,9 @@ jobs:
           IMAGE: ${{ steps.source.outputs.image }}
           SOURCE: ${{ inputs.source }}
         run: |
-          docker run --rm "$IMAGE" nginx -t
-          docker run -d --name aaaskola -p 127.0.0.1:8080:8080 "$IMAGE"
+          docker run -d --name aaaskola --network host \
+            -e PGHOST=127.0.0.1 -e PGPORT=5432 -e PGUSER=aaaskola_test \
+            -e PGPASSWORD=test-only-password -e PGDATABASE=aaaskola_test "$IMAGE"
           trap 'docker logs aaaskola; docker rm -f aaaskola' EXIT
           for attempt in $(seq 1 30); do
             curl -fsS http://127.0.0.1:8080/healthz >/dev/null && break
@@ -89,6 +118,8 @@ jobs:
           base = 'http://127.0.0.1:8080/'
           with urllib.request.urlopen(base + 'release.json') as response:
               assert json.load(response)['source'] == os.environ['SOURCE']
+          with urllib.request.urlopen(base + 'api/me') as response:
+              assert json.load(response)['user'] is None
           for path in Path('build/web').rglob('*'):
               if path.is_file() and not any(part.startswith('.') for part in path.relative_to('build/web').parts):
                   url = base + quote(path.relative_to('build/web').as_posix())

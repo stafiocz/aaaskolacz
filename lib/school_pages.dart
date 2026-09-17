@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'school_widgets.dart';
+import 'progress_widgets.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -10,6 +11,7 @@ class HomePage extends StatelessWidget {
     title: 'Vítej ve škole',
     children: [
       const SchoolBrand(),
+      const AccountCard(),
       const SizedBox(height: 24),
       const Text(
         'Co dnes procvičíme?',

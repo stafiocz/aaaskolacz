@@ -5,6 +5,8 @@ import 'math_problem.dart';
 import 'english_page.dart';
 import 'school_pages.dart';
 import 'vocabulary_grade5.dart';
+import 'progress.dart';
+import 'progress_widgets.dart';
 
 void main() => runApp(const AaaSkolaApp());
 
@@ -13,14 +15,37 @@ const _ink = Color(0xFF243C34);
 const _muted = Color(0xFF6E8177);
 const _background = Color(0xFFF3F6EF);
 
-class AaaSkolaApp extends StatelessWidget {
-  const AaaSkolaApp({super.key});
+class AaaSkolaApp extends StatefulWidget {
+  const AaaSkolaApp({super.key, this.progress});
+
+  final ProgressController? progress;
+
+  @override
+  State<AaaSkolaApp> createState() => _AaaSkolaAppState();
+}
+
+class _AaaSkolaAppState extends State<AaaSkolaApp> {
+  late final _progress = widget.progress ?? ProgressController();
+
+  @override
+  void initState() {
+    super.initState();
+    _progress.load();
+  }
+
+  @override
+  void dispose() {
+    if (widget.progress == null) _progress.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'AAA škola',
       debugShowCheckedModeBanner: false,
+      builder: (context, child) =>
+          ProgressScope(controller: _progress, child: child!),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: _green),
         scaffoldBackgroundColor: _background,
@@ -32,6 +57,7 @@ class AaaSkolaApp extends StatelessWidget {
       ),
       routes: {
         '/': (_) => const HomePage(),
+        '/vysledky': (_) => const ResultsPage(),
         '/7-trida': (_) => const GradePage(grade: 7),
         '/5-trida': (_) => const GradePage(grade: 5),
         '/3-trida': (_) => const GradePage(grade: 3),
@@ -65,6 +91,7 @@ class _PracticePageState extends State<PracticePage> {
   bool _incorrect = false;
   bool _solved = false;
   int _correctCount = 0;
+  String _exerciseId = newExerciseId();
 
   PracticeMode get _mode => _problem.mode;
 
@@ -102,6 +129,7 @@ class _PracticePageState extends State<PracticePage> {
   void _submit() {
     if (_solved) {
       setState(() {
+        if (_problem.nextStep == null) _exerciseId = newExerciseId();
         _problem = _problem.nextStep ?? _practice.next();
         _answer = '';
         _incorrect = false;
@@ -113,6 +141,13 @@ class _PracticePageState extends State<PracticePage> {
         _incorrect = !_solved;
         if (_solved && _problem.nextStep == null) _correctCount++;
       });
+      ProgressScope.of(context)?.record(
+        exerciseId: _exerciseId,
+        subject: 'math',
+        grade: widget.grade,
+        correct: _solved,
+        completed: _solved && _problem.nextStep == null,
+      );
     }
   }
 
@@ -172,6 +207,7 @@ class _PracticePageState extends State<PracticePage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const SaveStatus(),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(

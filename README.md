@@ -87,7 +87,42 @@ uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
 - Průběh se uchovává jen při otevřeném procvičování. Obnovení stránky nebo návrat
   na předměty začne novou návštěvu. Němčina je plánovaným rozšířením.
 
-Není potřeba účet ani backend. Příklady i kontrola slovíček běží lokálně.
+Procvičování funguje i bez účtu. Na webu lze přes Google ukládat výsledky;
+samotné generování příkladů a kontrola slovíček běží lokálně.
+
+## Přihlášení a denní výsledky
+
+Na úvodu je **Přihlásit se přes Google** a po přihlášení **Moje výsledky**.
+Přehled pro každý den zvoleného měsíce odděluje třídy a předměty:
+
+- Správné a chybné potvrzené odpovědi včetně oprav; anglické **Nevím** je chyba.
+- Počet dokončených příkladů; dvoukrokový řetězec se započítá až celý.
+- Počet zvládnutých slovíček v kolech. Kartičky bez zkoušení se nezapočítávají.
+- Dny bez procvičování jsou také vidět. Den se určuje v `Europe/Prague`.
+
+Údaje patří přihlášenému Google účtu (stabilní Google `sub`). Pro samostatné
+výsledky každého dítěte použijte jeho vlastní účet. API ověřuje Google ID token,
+nonce, původ požadavku, serverovou session a CSRF token. Session trvá 30 dní,
+cookie je HttpOnly/Secure/SameSite=Lax a v databázi je jen hash session tokenu.
+Ukládá se jméno, e-mail a výsledky; neukládá se Google token ani zadaný text odpovědi.
+API vyhodnocení odpovědi přebírá od aplikace; nejde o zabezpečený školní test.
+
+Čekající odpovědi se uloží do prohlížeče pod ID účtu a při výpadku se opakují
+se stejným ID bez dvojího započítání. Po opětovném přihlášení stejným účtem se
+odešlou i po obnovení stránky. Jinému účtu se nepřiřadí. Čas odpovědi vychází
+z hodin zařízení; nesmí být více než pět minut v budoucnosti. Smazání dat
+prohlížeče smaže dosud neodeslané odpovědi. Host se zpětně k účtu nepřiřazuje.
+Nativní Android/iOS verze zatím používají procvičování bez účtu.
+
+### Nastavení Google
+
+V [Google Cloud](https://developers.google.com/identity/gsi/web/guides/get-google-api-clientid)
+vytvořte OAuth klienta typu **Webová aplikace**, s Authorized JavaScript origins
+`https://aaaskola.cz`. Nastavte také publikum a obrazovku souhlasu aplikace.
+V testovacím režimu přidejte zamýšlené uživatele mezi testery.
+Client ID zapište do `GOOGLE_CLIENT_ID` v infrastrukturním `products/aaaskola.yml`
+a vydejte stejným postupem jako aplikaci. Client ID je veřejný identifikátor;
+client secret tato integrace nepotřebuje. Bez Client ID tlačítko zůstává neaktivní.
 
 ## Spuštění
 
@@ -117,7 +152,7 @@ Webový výstup vzniká v `build/web`, Android APK v
 ## Docker Swarm
 
 Produkční web běží na **https://aaaskola.cz/** ve stacku `products-aaaskola`,
-služba `products-aaaskola_web`. Kontejner nginx poslouchá na portu 8080;
+služba `products-aaaskola_web`. Node 24 obsluhuje Flutter web i API na portu 8080;
 HTTPS a certifikát Let's Encrypt zajišťuje společný Traefik přes síť `servers`.
 DNS záznam A pro `aaaskola.cz` musí směřovat na `77.78.90.63`.
 
@@ -170,8 +205,20 @@ stacku `products-aaaskola`.
 
 ### Lokální kontejner
 
-```powershell
-flutter build web --release --no-web-resources-cdn
-docker build -t aaaskola .
-docker run --rm -p 8080:8080 aaaskola
-```
+Nejdříve připravte PostgreSQL 17 a prázdnou databázi vlastněnou aplikační rolí
+bez superuser oprávnění. Pro Node nebo kontejner nastavte `PGHOST`, `PGPORT`,
+`PGDATABASE`, `PGUSER`, `PGPASSWORD_FILE` (případně lokálně `PGPASSWORD`),
+`APP_ORIGIN` a volitelně `GOOGLE_CLIENT_ID`. Hesla nepatří do Gitu.
+
+Po `flutter build web --release --no-web-resources-cdn` spusťte v `server/`
+`npm ci` a `npm start`. Server poskytuje frontend i API na portu 8080, takže
+`APP_ORIGIN=http://localhost:8080` umožní lokální vývoj bez cross-origin požadavků.
+Testy serveru (`npm test`) vyžadují vlastní databázi s názvem končícím `_test`;
+její tabulky mažou. CI ji vytváří izolovaně. `GET /healthz` ověřuje i DB spojení.
+
+Produkční PostgreSQL nemá veřejný port. Hesla jsou Docker secrets, aplikační
+role není superuser. Data `aaaskola_postgres_data` a zálohy `aaaskola_postgres_backups`
+leží na jediném uzlu označeném `aaaskola.data=true`; označení se nesmí přesunout
+bez přenosu dat. Záloha `pg_dump` vzniká každých 24 hodin, uchovává se 30 dní.
+Oba svazky jsou lokální: zálohy chrání před logickou chybou, pro ztrátu celého
+uzlu je nutná samostatná kopie mimo uzel. Podrobnosti obnovy jsou v deploy návodu.

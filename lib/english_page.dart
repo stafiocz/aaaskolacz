@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'school_widgets.dart';
 import 'vocabulary.dart';
 import 'vocabulary_practice.dart';
+import 'progress.dart';
+import 'progress_widgets.dart';
 
 enum _Stage { intro, cards, quiz, done }
 
@@ -31,6 +33,7 @@ class _EnglishPageState extends State<EnglishPage> {
   late VocabularyQuiz _quiz;
   int _card = 0;
   bool _revealed = false;
+  Map<VocabularyEntry, String> _exerciseIds = {};
 
   @override
   void dispose() {
@@ -42,6 +45,7 @@ class _EnglishPageState extends State<EnglishPage> {
   void _start({bool study = true}) {
     setState(() {
       _round = _deck.nextRound();
+      _exerciseIds = {for (final word in _round) word: newExerciseId()};
       _card = 0;
       _revealed = false;
       _quiz = VocabularyQuiz(_round);
@@ -56,6 +60,13 @@ class _EnglishPageState extends State<EnglishPage> {
     }
     _answerFocus.unfocus();
     setState(() => _quiz.check(reveal ? '' : _answer.text));
+    ProgressScope.of(context)?.record(
+      exerciseId: _exerciseIds[_quiz.current]!,
+      subject: 'english',
+      grade: widget.grade,
+      correct: _quiz.correct!,
+      completed: _quiz.correct!,
+    );
   }
 
   void _next() {
@@ -207,6 +218,7 @@ class _EnglishPageState extends State<EnglishPage> {
     final word = _quiz.current;
     final checked = _quiz.correct != null;
     return [
+      const SaveStatus(),
       Text(
         'ZKOUŠENÍ · Zvládnuto ${_quiz.completed} / ${_quiz.total}',
         key: const ValueKey('vocabulary-progress'),

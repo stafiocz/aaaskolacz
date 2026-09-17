@@ -1,0 +1,19 @@
+{
+  "name": "aaaskola-server",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node main.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "cookie-parser": "1.4.7",
+    "express": "5.2.1",
+    "express-rate-limit": "8.7.0",
+    "google-auth-library": "11.1.0",
+    "pg": "8.23.0"
+  }
+}
