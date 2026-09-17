@@ -1,7 +1,7 @@
 import 'package:aaaskola/english_page.dart';
 import 'package:aaaskola/main.dart';
 import 'package:aaaskola/vocabulary.dart';
-import 'package:aaaskola/vocabulary_grade3.dart';
+import 'package:aaaskola/vocabulary_grade5.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -42,6 +42,7 @@ void main() {
   ) async {
     await tester.pumpWidget(const AaaSkolaApp());
     expect(find.text('7. třída'), findsOneWidget);
+    expect(find.text('5. třída'), findsOneWidget);
     expect(find.text('3. třída'), findsOneWidget);
     await tapText(tester, '7. třída');
     expect(find.text('Angličtina'), findsOneWidget);
@@ -62,36 +63,41 @@ void main() {
     expect(find.text('MIX'), findsOneWidget);
     await tapText(tester, 'Matematika · 3. třída');
     expect(find.text('Matematika'), findsOneWidget);
+    expect(find.text('Angličtina'), findsNothing);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tapText(tester, '5. třída');
+    expect(find.text('Matematika'), findsOneWidget);
     await tapText(tester, 'Angličtina');
-    expect(find.text('Angličtina · 3. třída'), findsOneWidget);
+    expect(find.text('Angličtina · 5. třída'), findsOneWidget);
     expect(
       tester.widget<EnglishPage>(find.byType(EnglishPage)).entries,
-      same(vocabularyGrade3),
+      same(vocabularyGrade5),
     );
     expect(
       find.textContaining('Introduction a Me! · strany 4–21'),
       findsOneWidget,
     );
     await tapText(tester, 'Prohlédnout všechna slovíčka');
-    expect(find.text('Slovíčka · 3. třída'), findsOneWidget);
+    expect(find.text('Slovíčka · 5. třída'), findsOneWidget);
     await tapText(tester, 'Školní potřeby');
     expect(find.text('pencil'), findsOneWidget);
     expect(find.text('tužka'), findsOneWidget);
     expect(find.text('s. 4'), findsWidgets);
   });
 
-  testWidgets('grade 3 quiz completes eight words and offers new ones', (
+  testWidgets('grade 5 quiz completes eight words and offers new ones', (
     tester,
   ) async {
     await tester.pumpWidget(const AaaSkolaApp());
-    await tapText(tester, '3. třída');
+    await tapText(tester, '5. třída');
     await tapText(tester, 'Angličtina');
     await tapText(tester, 'Rovnou se vyzkoušet');
     final seen = <String>{};
     for (var index = 0; index < 8; index++) {
       final question = prompt(tester);
       expect(seen.add(question), isTrue);
-      final word = vocabularyGrade3.singleWhere((e) => e.czech == question);
+      final word = vocabularyGrade5.singleWhere((e) => e.czech == question);
       await tester.enterText(find.byType(TextField), word.english);
       await tapText(tester, 'Zkontrolovat');
       expect(find.text('Správně!'), findsOneWidget);
@@ -105,7 +111,7 @@ void main() {
         .widget<Text>(find.byKey(const ValueKey('flashcard-czech')))
         .data;
     expect(seen, isNot(contains(next)));
-    expect(vocabularyGrade3.map((e) => e.czech), contains(next));
+    expect(vocabularyGrade5.map((e) => e.czech), contains(next));
   });
 
   testWidgets('flashcards reveal translations then start written recall', (
@@ -182,7 +188,7 @@ void main() {
     expect(find.text('s. 5'), findsOneWidget);
   });
 
-  for (final grade in [3, 7]) {
+  for (final grade in [5, 7]) {
     for (final size in [
       const Size(320, 568),
       const Size(390, 844),

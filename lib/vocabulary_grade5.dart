@@ -1,6 +1,6 @@
 import 'vocabulary.dart';
 
-const vocabularyGrade3 = <VocabularyEntry>[
+const vocabularyGrade5 = <VocabularyEntry>[
   VocabularyEntry('pencil', 'tužka', 'Školní potřeby', 4),
   VocabularyEntry(
     'rubber',

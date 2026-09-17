@@ -1,27 +1,27 @@
 import 'dart:math';
 
 import 'package:aaaskola/vocabulary.dart';
-import 'package:aaaskola/vocabulary_grade3.dart';
+import 'package:aaaskola/vocabulary_grade5.dart';
 import 'package:aaaskola/vocabulary_practice.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 VocabularyEntry entry(String english) =>
-    vocabularyGrade3.singleWhere((word) => word.english == english);
+    vocabularyGrade5.singleWhere((word) => word.english == english);
 
 void main() {
-  test('grade 3 covers all supplied pages with unique words and prompts', () {
-    expect(vocabularyGrade3.map((e) => e.page).toSet(), {
+  test('grade 5 covers all supplied pages with unique words and prompts', () {
+    expect(vocabularyGrade5.map((e) => e.page).toSet(), {
       for (var page = 4; page <= 21; page++) page,
     });
     expect(
-      vocabularyGrade3.map((e) => normalizeAnswer(e.english)).toSet(),
-      hasLength(vocabularyGrade3.length),
+      vocabularyGrade5.map((e) => normalizeAnswer(e.english)).toSet(),
+      hasLength(vocabularyGrade5.length),
     );
     expect(
-      vocabularyGrade3.map((e) => e.czech).toSet(),
-      hasLength(vocabularyGrade3.length),
+      vocabularyGrade5.map((e) => e.czech).toSet(),
+      hasLength(vocabularyGrade5.length),
     );
-    for (final word in vocabularyGrade3) {
+    for (final word in vocabularyGrade5) {
       expect(word.czech.trim(), isNotEmpty);
       expect(word.topic.trim(), isNotEmpty);
       expect(word.accepts(word.english), isTrue);
@@ -197,7 +197,7 @@ void main() {
         expect(entry(english).page, group.key, reason: english);
       }
     }
-    expect(vocabularyGrade3.any((e) => e.english == 'staffroom'), isFalse);
+    expect(vocabularyGrade5.any((e) => e.english == 'staffroom'), isFalse);
     expect(vocabulary.any((e) => e.english == 'staffroom'), isTrue);
   });
 
@@ -221,16 +221,16 @@ void main() {
     },
   );
 
-  test('grade 3 rounds cover only its own deck before repeating', () {
-    final deck = VocabularyDeck(entries: vocabularyGrade3, random: Random(3));
+  test('grade 5 rounds cover only its own deck before repeating', () {
+    final deck = VocabularyDeck(entries: vocabularyGrade5, random: Random(3));
     final seen = <VocabularyEntry>[];
-    while (seen.length < vocabularyGrade3.length) {
+    while (seen.length < vocabularyGrade5.length) {
       final round = deck.nextRound();
       expect(round.length, inInclusiveRange(1, 8));
       expect(round.toSet().intersection(seen.toSet()), isEmpty);
       seen.addAll(round);
     }
-    expect(seen, unorderedEquals(vocabularyGrade3));
+    expect(seen, unorderedEquals(vocabularyGrade5));
     expect(deck.nextRound(), hasLength(8));
   });
 }

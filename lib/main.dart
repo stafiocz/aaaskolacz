@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'math_problem.dart';
 import 'english_page.dart';
 import 'school_pages.dart';
-import 'vocabulary_grade3.dart';
+import 'vocabulary_grade5.dart';
 
 void main() => runApp(const AaaSkolaApp());
 
@@ -38,9 +38,9 @@ class AaaSkolaApp extends StatelessWidget {
         '/7-trida/anglictina': (_) => const EnglishPage(),
         '/3-trida/matematika': (_) => const PracticePage(),
         '/5-trida/matematika': (_) => const PracticePage(grade: 5),
-        '/3-trida/anglictina': (_) => const EnglishPage(
-          grade: 3,
-          entries: vocabularyGrade3,
+        '/5-trida/anglictina': (_) => const EnglishPage(
+          grade: 5,
+          entries: vocabularyGrade5,
           sourceTitle: 'Introduction a Me! · strany 4–21',
         ),
       },

@@ -7,8 +7,8 @@ Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
-Na úvodu je rozcestník **7. třída → Angličtina**, **5. třída → Matematika**
-a **3. třída → Matematika / Angličtina**.
+Na úvodu je rozcestník **7. třída → Angličtina**, **5. třída → Matematika / Angličtina**
+a **3. třída → Matematika**.
 Z předmětu se lze vrátit na výběr předmětů a tříd.
 
 ## 3. třída — Matematika
@@ -53,16 +53,16 @@ Všechny výsledky jsou nezáporná celá čísla, dělení je přesné a bez nu
 dělitele. Čísla mají oddělené tisíce; klávesnice na displeji i fyzická klávesnice
 přijmou až sedm číslic. Procvičování 3. třídy si ponechává vlastní rozsahy a mix.
 
-## 3. třída — Angličtina
+## 5. třída — Angličtina
 
 Slovíčka a krátké fráze pocházejí z dodaných fotografií stran 4–21,
 **Introduction** a **Unit 1: Me!**. Přepis s českými překlady, stránkami a
-uznávanými variantami je v `lib/vocabulary_grade3.dart`. Obsahuje školní potřeby,
+uznávanými variantami je v `lib/vocabulary_grade5.dart`. Obsahuje školní potřeby,
 barvy, čísla, činnosti, pocity, rodinu, země a národnosti, měsíce, dny,
 školní předměty, čas a slovíčka ze závěrečných stran o vlajkách a slunečních hodinách.
 Opakovaná fotografie strany 16 a opakování již uvedených slov nevytvářejí duplicity.
 
-Procvičování je na `/#/3-trida/anglictina`. Používá stejný postup níže jako
+Procvičování je na `/#/5-trida/anglictina`. Používá stejný postup níže jako
 7. třída, ale vlastní slovník. Témata se míchají automaticky.
 
 ## 7. třída — Angličtina

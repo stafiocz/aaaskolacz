@@ -60,16 +60,14 @@ Future<void> answerCorrectly(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('grade 5 has only mathematics and returns to its subjects', (
-    tester,
-  ) async {
+  testWidgets('grade 5 mathematics returns to its subjects', (tester) async {
     await openGrade5(tester);
     expect(find.text('Matematika · 5. třída'), findsOneWidget);
     await tester.tap(find.text('Matematika · 5. třída'));
     await tester.pumpAndSettle();
     expect(find.text('5. třída'), findsOneWidget);
     expect(find.text('Matematika'), findsOneWidget);
-    expect(find.text('Angličtina'), findsNothing);
+    expect(find.text('Angličtina'), findsOneWidget);
   });
 
   testWidgets(

@@ -29,13 +29,13 @@ class HomePage extends StatelessWidget {
       ),
       LessonCard(
         title: '5. třída',
-        subtitle: 'Matematika · počítání s velkými čísly',
+        subtitle: 'Matematika a angličtina',
         icon: Icons.calculate_outlined,
         onTap: () => Navigator.pushNamed(context, '/5-trida'),
       ),
       LessonCard(
         title: '3. třída',
-        subtitle: 'Matematika a angličtina',
+        subtitle: 'Matematika · mix příkladů',
         icon: Icons.calculate_outlined,
         onTap: () => Navigator.pushNamed(context, '/3-trida'),
       ),
@@ -68,7 +68,7 @@ class GradePage extends StatelessWidget {
             onTap: () =>
                 Navigator.pushNamed(context, '/$grade-trida/matematika'),
           ),
-        if (grade == 3 || grade == 7)
+        if (grade == 5 || grade == 7)
           LessonCard(
             title: 'Angličtina',
             subtitle: grade == 7
