@@ -111,8 +111,8 @@ test('math chain counts both steps and retries but only one completion; English 
     assert.equal((await post('/api/attempts', session, attempt({ exerciseId: word, subject: 'english', correct, completed: correct }))).status, 201);
   }
   assert.deepEqual(await stats(session), [
-    { day: '2026-03-29', subject: 'english', grade: 5, practiced: 1, correct: 1, incorrect: 1, completed: 1 },
-    { day: '2026-03-29', subject: 'math', grade: 5, practiced: 1, correct: 2, incorrect: 1, completed: 1 },
+    { day: '2026-03-29', subject: 'english', grade: 5, subjectName: 'Angličtina', subjectKind: 'vocabulary', gradeName: '5. třída', practiced: 1, correct: 1, incorrect: 1, completed: 1 },
+    { day: '2026-03-29', subject: 'math', grade: 5, subjectName: 'Matematika', subjectKind: 'math', gradeName: '5. třída', practiced: 1, correct: 2, incorrect: 1, completed: 1 },
   ]);
 });
 test('offline events use Czech calendar days across midnight and daylight saving', async () => {
@@ -132,4 +132,104 @@ test('invalid answers, grades, dates and completed failures are rejected', async
   for (const query of ['from=2026-02-30&to=2026-03-01', 'from=2026-03-03&to=2026-03-02', 'from=2020-01-01&to=2026-01-01']) {
     assert.equal((await fetch(base + '/api/stats?' + query, { headers: { Cookie: session.cookie } })).status, 400);
   }
+});
+
+test('catalog migration preserves legacy accounts, sessions and results and never reseeds edits', async () => {
+  const schema = `migration_${randomUUID().replaceAll('-', '')}`;
+  await pool.query(`CREATE SCHEMA ${schema}`);
+  const isolated = new pg.Pool({ options: `-c search_path=${schema}` });
+  try {
+    const { readFile } = await import('node:fs/promises');
+    const { login, saveAttempt, dailyStats } = await import('./database.js');
+    await isolated.query(await readFile(new URL('./schema.sql', import.meta.url), 'utf8'));
+    const session = await login(isolated, { sub: 'legacy', name: 'Legacy', email: 'legacy@example.test' });
+    await saveAttempt(isolated, session.user.id, attempt());
+    await migrate(isolated);
+    assert.equal((await dailyStats(isolated, session.user.id, '2026-03-01', '2026-03-31'))[0].correct, 1);
+    assert.equal((await isolated.query('SELECT count(*)::int n FROM sessions')).rows[0].n, 1);
+    await isolated.query("UPDATE practice_items SET active=false WHERE id='3-math-additionSubtraction-1'");
+    await isolated.query("UPDATE school_grades SET name='Třeťáci' WHERE id=3");
+    await migrate(isolated);
+    assert.equal((await isolated.query("SELECT active FROM practice_items WHERE id='3-math-additionSubtraction-1'")).rows[0].active, false);
+    assert.equal((await isolated.query('SELECT name FROM school_grades WHERE id=3')).rows[0].name, 'Třeťáci');
+    assert.equal((await isolated.query('SELECT count(*)::int n FROM practice_items')).rows[0].n, 1283);
+  } finally {
+    await isolated.end();
+    await pool.query(`DROP SCHEMA ${schema} CASCADE`);
+  }
+});
+
+async function importTransaction(content, check = false) {
+  const { importContent } = await import('./catalog.js');
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const count = await importContent(client, content);
+    await client.query(check ? 'ROLLBACK' : 'COMMIT');
+    return count;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally { client.release(); }
+}
+const newWord = { english: 'Haus', czech: 'dům', topic: 'Doma', page: 1, alternatives: ['das Haus'] };
+const newContent = () => ({
+  grades: [{ id: 4, name: '4. třída' }],
+  subjects: [{ id: 'german', slug: 'nemcina', name: 'Němčina', kind: 'vocabulary', answerLanguage: 'německy' }],
+  courses: [{ grade: 4, subject: 'german', description: 'Slovíčka', maxDigits: 3,
+    items: [{ id: 'test-house', data: newWord }] }],
+});
+
+test('database-only changes appear in catalog immediately and new courses record separate results', async () => {
+  const session = await signIn(), bob = await signIn('bob');
+  const catalog = async () => {
+    const response = await fetch(base + '/api/catalog');
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get('cache-control'), /no-store/);
+    return response.json();
+  };
+  const initial = await catalog();
+  assert.equal(initial.courses.reduce((n, c) => n + c.items.length, 0), 1283);
+  try {
+    await importTransaction(newContent());
+    const updated = await catalog();
+    assert.equal(updated.grades.find(g => g.id === 4).name, '4. třída');
+    assert.equal(updated.subjects.find(s => s.id === 'german').name, 'Němčina');
+    assert.equal(updated.courses.find(c => c.grade === 4).items[0].data.czech, 'dům');
+    assert.equal((await post('/api/attempts', session, attempt({ grade: 4, subject: 'german' }))).status, 201);
+    const rows = await stats(session);
+    assert.equal(rows[0].subjectName, 'Němčina'); assert.equal(rows[0].completed, 1);
+    assert.deepEqual(await stats(bob), []);
+    await importTransaction({ courses: [{ grade: 4, subject: 'german', items: [
+      { id: 'test-house', data: newWord, active: false },
+    ] }] });
+    const hidden = (await catalog()).courses.find(c => c.grade === 4);
+    assert.equal(hidden.items.length, 0); assert.equal(hidden.description, 'Slovíčka'); assert.equal(hidden.maxDigits, 3);
+    await pool.query('UPDATE school_grades SET active=false WHERE id=4');
+    assert.equal((await catalog()).courses.some(c => c.grade === 4), false);
+    assert.equal((await stats(session))[0].completed, 1);
+  } finally {
+    await pool.query('TRUNCATE users CASCADE');
+    await pool.query("DELETE FROM practice_items WHERE subject='german'; DELETE FROM school_courses WHERE subject='german'; DELETE FROM school_subjects WHERE id='german'; DELETE FROM school_grades WHERE id=4");
+  }
+});
+
+test('content import validates entire transaction, preserves courses, and supports dry run', async () => {
+  assert.equal(await importTransaction(newContent(), true), 1);
+  assert.equal((await pool.query('SELECT 1 FROM school_grades WHERE id=4')).rowCount, 0);
+  for (const edit of [
+    content => { content.courses[0].items[0].data.english = ''; },
+    content => { content.courses[0].items[0].id = '5-english-1'; },
+    content => { delete content.subjects[0].id; },
+    content => { content.courses[0].active = 'false'; },
+    content => { content.courses[0].items.push(content.courses[0].items[0]); },
+  ]) {
+    const content = newContent();
+    content.courses[0].items[0].data = { ...newWord };
+    edit(content);
+    await assert.rejects(importTransaction(content));
+    assert.equal((await pool.query('SELECT 1 FROM school_grades WHERE id=4')).rowCount, 0);
+  }
+  await assert.rejects(importTransaction({ courses: [{ grade: 5, subject: 'math', maxDigits: 1, items: [] }] }));
+  assert.equal((await pool.query("SELECT max_digits FROM school_courses WHERE grade=5 AND subject='math'")).rows[0].max_digits, 7);
 });

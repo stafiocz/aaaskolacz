@@ -3,8 +3,8 @@ import 'dart:math';
 import 'vocabulary.dart';
 
 class VocabularyDeck {
-  VocabularyDeck({List<VocabularyEntry>? entries, Random? random})
-    : _entries = entries ?? vocabulary,
+  VocabularyDeck({required List<VocabularyEntry> entries, Random? random})
+    : _entries = List.of(entries),
       _random = random ?? Random();
 
   final List<VocabularyEntry> _entries;

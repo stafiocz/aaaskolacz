@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { randomUUID, createHash, randomBytes } from 'node:crypto';
+import { importContent } from './catalog.js';
 
 export const secretToken = () => randomBytes(32).toString('hex');
 export const hashToken = token => createHash('sha256').update(token).digest('hex');
@@ -10,6 +11,15 @@ export async function migrate(pool) {
     await client.query('BEGIN');
     await client.query('SELECT pg_advisory_xact_lock(84731201)');
     await client.query(await readFile(new URL('./schema.sql', import.meta.url), 'utf8'));
+    await client.query('CREATE TABLE IF NOT EXISTS content_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+    if (!(await client.query("SELECT 1 FROM content_migrations WHERE version='catalog-v1'")).rowCount) {
+      await client.query(await readFile(new URL('./catalog.sql', import.meta.url), 'utf8'));
+      await importContent(client, JSON.parse(await readFile(new URL('./content-seed.json', import.meta.url), 'utf8')));
+      await client.query(`ALTER TABLE exercises DROP CONSTRAINT IF EXISTS exercises_subject_check;
+        ALTER TABLE exercises DROP CONSTRAINT IF EXISTS exercises_check;
+        ALTER TABLE exercises ADD CONSTRAINT exercises_course_fk FOREIGN KEY (grade,subject) REFERENCES school_courses(grade,subject);
+        INSERT INTO content_migrations(version) VALUES ('catalog-v1')`);
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -72,14 +82,15 @@ export async function saveAttempt(pool, userId, attempt) {
 export async function dailyStats(pool, userId, from, to) {
   const { rows } = await pool.query(`
     SELECT to_char(a.answered_at AT TIME ZONE 'Europe/Prague', 'YYYY-MM-DD') AS day,
-      e.subject, e.grade, count(DISTINCT a.exercise_id)::int AS practiced,
+      e.subject, e.grade, s.name AS "subjectName", s.kind AS "subjectKind", g.name AS "gradeName", count(DISTINCT a.exercise_id)::int AS practiced,
       count(*) FILTER (WHERE a.correct)::int AS correct,
       count(*) FILTER (WHERE NOT a.correct)::int AS incorrect,
       count(*) FILTER (WHERE a.completed)::int AS completed
     FROM attempts a JOIN exercises e ON e.user_id = a.user_id AND e.id = a.exercise_id
+    JOIN school_subjects s ON s.id=e.subject JOIN school_grades g ON g.id=e.grade
     WHERE a.user_id = $1
       AND a.answered_at >= $2::date::timestamp AT TIME ZONE 'Europe/Prague'
       AND a.answered_at < ($3::date + 1)::timestamp AT TIME ZONE 'Europe/Prague'
-    GROUP BY day, e.subject, e.grade ORDER BY day DESC, e.subject, e.grade`, [userId, from, to]);
+    GROUP BY day, e.subject, e.grade, s.id, g.id ORDER BY day DESC, e.subject, e.grade`, [userId, from, to]);
   return rows;
 }

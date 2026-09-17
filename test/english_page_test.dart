@@ -1,7 +1,8 @@
+import 'catalog_fixture.dart';
+import '../tool/vocabulary_seed.dart';
 import 'package:aaaskola/english_page.dart';
-import 'package:aaaskola/main.dart';
 import 'package:aaaskola/vocabulary.dart';
-import 'package:aaaskola/vocabulary_grade5.dart';
+import '../tool/vocabulary_grade5_seed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -40,7 +41,7 @@ void main() {
   testWidgets('home routes to grades and subjects and returns from English', (
     tester,
   ) async {
-    await tester.pumpWidget(const AaaSkolaApp());
+    await tester.pumpWidget(testApp());
     expect(find.text('7. třída'), findsOneWidget);
     expect(find.text('5. třída'), findsOneWidget);
     expect(find.text('3. třída'), findsOneWidget);
@@ -52,7 +53,11 @@ void main() {
     expect(find.text('Angličtina · 7. třída'), findsOneWidget);
     expect(
       tester.widget<EnglishPage>(find.byType(EnglishPage)).entries,
-      same(vocabulary),
+      isA<List<VocabularyEntry>>().having(
+        (items) => items.map((w) => w.english).toSet(),
+        'words',
+        vocabulary.map((w) => w.english).toSet(),
+      ),
     );
     await tester.pageBack();
     await tester.pumpAndSettle();
@@ -72,7 +77,11 @@ void main() {
     expect(find.text('Angličtina · 5. třída'), findsOneWidget);
     expect(
       tester.widget<EnglishPage>(find.byType(EnglishPage)).entries,
-      same(vocabularyGrade5),
+      isA<List<VocabularyEntry>>().having(
+        (items) => items.map((w) => w.english).toSet(),
+        'words',
+        vocabularyGrade5.map((w) => w.english).toSet(),
+      ),
     );
     expect(
       find.textContaining('Introduction a Me! · strany 4–21'),
@@ -89,7 +98,7 @@ void main() {
   testWidgets('grade 5 quiz completes eight words and offers new ones', (
     tester,
   ) async {
-    await tester.pumpWidget(const AaaSkolaApp());
+    await tester.pumpWidget(testApp());
     await tapText(tester, '5. třída');
     await tapText(tester, 'Angličtina');
     await tapText(tester, 'Rovnou se vyzkoušet');
@@ -202,7 +211,7 @@ void main() {
           addTearDown(tester.view.resetPhysicalSize);
           addTearDown(tester.view.resetDevicePixelRatio);
           addTearDown(tester.view.resetViewInsets);
-          await tester.pumpWidget(const AaaSkolaApp());
+          await tester.pumpWidget(testApp());
           await tapText(tester, '$grade. třída');
           await tapText(tester, 'Angličtina');
           await tapText(tester, 'Rovnou se vyzkoušet');

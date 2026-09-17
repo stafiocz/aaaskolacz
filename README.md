@@ -39,7 +39,7 @@ hned po sobě ani na přechodu mezi šesticemi. Oblasti se ručně nevybírají.
 ## 5. třída — Matematika
 
 Mix na `/#/5-trida/matematika` vychází z fotografií pracovního sešitu
-**Miliony – opakování**, strany 4–8. Generuje nové příklady podobné obtížnosti:
+**Miliony – opakování**, strany 4–8. Míchá databázový zásobník příkladů podobné obtížnosti:
 
 - Sčítání a odčítání stovek, tisíců a milionů, nejvýše do 9 000 000.
   Po správné odpovědi se zobrazí zkouška opačnou operací.
@@ -59,7 +59,7 @@ přijmou až sedm číslic. Procvičování 3. třídy si ponechává vlastní r
 
 Slovíčka a krátké fráze pocházejí z dodaných fotografií stran 4–21,
 **Introduction** a **Unit 1: Me!**. Přepis s českými překlady, stránkami a
-uznávanými variantami je v `lib/vocabulary_grade5.dart`. Obsahuje školní potřeby,
+uznávanými variantami je v databázi; výchozí přepis je v `tool/vocabulary_grade5_seed.dart`. Obsahuje školní potřeby,
 barvy, čísla, činnosti, pocity, rodinu, země a národnosti, měsíce, dny,
 školní předměty, čas a slovíčka ze závěrečných stran o vlajkách a slunečních hodinách.
 Opakovaná fotografie strany 16 a opakování již uvedených slov nevytvářejí duplicity.
@@ -71,7 +71,7 @@ Procvičování je na `/#/5-trida/anglictina`. Používá stejný postup níže 
 
 Slovíčka a fráze pocházejí z dodaných fotografií stran 4–7, **Introduction A: New
 friends** a **B: The exchange students**. Ruční přepis a české překlady jsou v
-`lib/vocabulary.dart`; u každé položky je téma, zdrojová stránka a případné další
+`tool/vocabulary_seed.dart`; za běhu se načítají z databáze. U každé položky je téma, zdrojová stránka a případné další
 uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
 
 ### Jak se procvičuje angličtina v obou třídách
@@ -90,7 +90,31 @@ uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
   na předměty začne novou návštěvu. Němčina je plánovaným rozšířením.
 
 Procvičování funguje i bez účtu. Na webu lze přes Google ukládat výsledky;
-samotné generování příkladů a kontrola slovíček běží lokálně.
+nabídka a obsah se načítají z databáze, míchání a kontrola odpovědí běží lokálně.
+Při otevření aplikace je potřeba připojení k internetu.
+
+## Obsah v databázi
+
+Třídy (`school_grades`), předměty (`school_subjects`), jejich přiřazení
+(`school_courses`) a jednotlivá zadání (`practice_items.data`, JSONB) jsou
+v PostgreSQL. Web načítá aktivní nabídku přes `GET /api/catalog` bez cache.
+Nová třída, předmět nebo zadání se projeví po obnovení stránky či tlačítkem
+**Obnovit nabídku** na úvodu. Rozpracované cvičení používá již načtený obsah.
+
+Podporované typy předmětů jsou `math` (číselná odpověď, případně návazné kroky)
+a `vocabulary` (kartičky a psaný překlad). Přidání obsahu těchto typů nevyžaduje
+novou verzi. Zcela nový způsob zkoušení vyžaduje doplnění aplikace.
+
+První migrace `catalog-v1` vloží `server/content-seed.json` **pouze jednou**:
+324 matematických zadání pro 3. třídu (včetně všech 24 z fotografií), 480 pro
+5. třídu, 341 slovíček pro 5. třídu a 138 pro 7. třídu. Další start ani vydání
+nepřepisuje změněný obsah. Migrace zachovává účty, přihlášení i historii výsledků.
+Matematika projde náhodně všechny skupiny, v každé postupně celý zásobník;
+teprve pak položky opakuje. Každá skupina tak dostane stejný prostor v mixu.
+
+Přidávání a úpravy popisuje [CONTENT.md](CONTENT.md). Původní slovníky a
+generátory v `tool/` slouží pouze k vytvoření výchozí migrace příkazem
+`dart run tool/export_content.dart`; nejsou součástí nabídky běžící aplikace.
 
 ## Přihlášení a denní výsledky
 
@@ -132,7 +156,8 @@ Vyžaduje Flutter s Dartem 3.12.2 nebo novějším.
 
 ```powershell
 flutter pub get
-flutter run -d chrome
+flutter build web --release --no-web-resources-cdn
+# Pak spusťte Node server podle části Lokální kontejner níže.
 ```
 
 Pro Android připojte telefon s povoleným laděním USB nebo spusťte emulátor

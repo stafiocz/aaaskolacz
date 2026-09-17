@@ -1,3 +1,4 @@
+import '../tool/vocabulary_seed.dart';
 import 'dart:math';
 
 import 'package:aaaskola/vocabulary.dart';
@@ -54,7 +55,7 @@ void main() {
   test(
     'rounds cover the whole deck before repeating, including its last part',
     () {
-      final deck = VocabularyDeck(random: Random(19));
+      final deck = VocabularyDeck(entries: vocabulary, random: Random(19));
       final seen = <VocabularyEntry>[];
       while (seen.length < vocabulary.length) {
         final round = deck.nextRound();

@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:aaaskola/math_problem.dart';
+import '../tool/math_seed.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 List<int> checkEquation(String equation) {

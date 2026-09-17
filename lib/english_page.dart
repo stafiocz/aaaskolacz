@@ -12,10 +12,18 @@ class EnglishPage extends StatefulWidget {
   const EnglishPage({
     super.key,
     this.grade = 7,
-    this.entries = vocabulary,
+    required this.entries,
+    this.subject = 'english',
+    this.subjectName = 'Angličtina',
+    this.answerLanguage = 'anglicky',
+    this.gradeName,
     this.sourceTitle = 'Introduction · strany 4–7',
   });
 
+  final String? gradeName;
+  final String subject;
+  final String subjectName;
+  final String answerLanguage;
   final int grade;
   final List<VocabularyEntry> entries;
   final String sourceTitle;
@@ -62,7 +70,7 @@ class _EnglishPageState extends State<EnglishPage> {
     setState(() => _quiz.check(reveal ? '' : _answer.text));
     ProgressScope.of(context)?.record(
       exerciseId: _exerciseIds[_quiz.current]!,
-      subject: 'english',
+      subject: widget.subject,
       grade: widget.grade,
       correct: _quiz.correct!,
       completed: _quiz.correct!,
@@ -82,7 +90,8 @@ class _EnglishPageState extends State<EnglishPage> {
 
   @override
   Widget build(BuildContext context) => SchoolPage(
-    title: 'Angličtina · ${widget.grade}. třída',
+    title:
+        '${widget.subjectName} · ${widget.gradeName ?? '${widget.grade}. třída'}',
     children: switch (_stage) {
       _Stage.intro => _intro(),
       _Stage.cards => _cards(),
@@ -108,8 +117,8 @@ class _EnglishPageState extends State<EnglishPage> {
         style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
       ),
       const SizedBox(height: 16),
-      const Text(
-        '1. Projdi kartičky a zkus si vybavit překlad.\n\n2. Napiš anglicky české slovíčko nebo frázi.\n\n3. Co se nepovede, vrátí se na konci kola.',
+      Text(
+        '1. Projdi kartičky a zkus si vybavit překlad.\n\n2. Napiš ${widget.answerLanguage} české slovíčko nebo frázi.\n\n3. Co se nepovede, vrátí se na konci kola.',
         style: TextStyle(fontSize: 16, height: 1.5),
       ),
     ]),
@@ -240,7 +249,10 @@ class _EnglishPageState extends State<EnglishPage> {
           style: const TextStyle(color: Color(0xFF6E8177)),
         ),
         const SizedBox(height: 18),
-        const Text('Jak se řekne anglicky…', style: TextStyle(fontSize: 15)),
+        Text(
+          'Jak se řekne ${widget.answerLanguage}…',
+          style: const TextStyle(fontSize: 15),
+        ),
         const SizedBox(height: 8),
         Text(
           word.czech,
@@ -257,11 +269,11 @@ class _EnglishPageState extends State<EnglishPage> {
           enableSuggestions: false,
           keyboardType: TextInputType.text,
           textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            labelText: 'Napiš anglicky',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: 'Napiš ${widget.answerLanguage}',
+            border: const OutlineInputBorder(),
             filled: true,
-            fillColor: Color(0xFFF3F6EF),
+            fillColor: const Color(0xFFF3F6EF),
           ),
           onChanged: (_) => setState(() {}),
           onSubmitted: (_) {

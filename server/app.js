@@ -5,6 +5,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dailyStats, hashToken, login, saveAttempt, secretToken } from './database.js';
 import { verifyGoogle } from './auth.js';
+import { readCatalog } from './catalog.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
@@ -30,6 +31,7 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
     res.type('text').send('ok\n');
   });
   app.use('/api', rateLimit({ windowMs: 60_000, limit: 240, standardHeaders: 'draft-8', legacyHeaders: false }));
+  app.get('/api/catalog', async (req, res) => res.json(await readCatalog(pool)));
   app.get('/login', (req, res) => {
     if (!clientId) return res.status(503).type('html').send('<h1>Přihlášení zatím není připravené.</h1><a href="/">Zpět do školy</a>');
     const nonce = secretToken();
@@ -83,11 +85,15 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
   app.post('/api/attempts', async (req, res) => {
     const body = req.body ?? {};
     if (!uuid.test(body.id) || !uuid.test(body.exerciseId) ||
-        !(body.subject === 'math' ? [3, 5] : body.subject === 'english' ? [5, 7] : []).includes(body.grade) ||
+        typeof body.subject !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/.test(body.subject) ||
+        !Number.isInteger(body.grade) || body.grade < 1 || body.grade > 99 ||
         typeof body.correct !== 'boolean' || typeof body.completed !== 'boolean' || (body.completed && !body.correct) ||
         typeof body.occurredAt !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3,6}Z$/.test(body.occurredAt) ||
         !Number.isFinite(Date.parse(body.occurredAt)) || Date.parse(body.occurredAt) > Date.now() + 300_000) {
       return res.status(400).json({ error: 'Invalid attempt' });
+    }
+    if (!(await pool.query('SELECT 1 FROM school_courses WHERE grade=$1 AND subject=$2', [body.grade, body.subject])).rowCount) {
+      return res.status(400).json({ error: 'Unknown course' });
     }
     const result = await saveAttempt(pool, req.session.id, body);
     res.status(result === 'conflict' ? 409 : result === 'created' ? 201 : 200).json({ result });

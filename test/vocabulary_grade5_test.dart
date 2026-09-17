@@ -1,7 +1,8 @@
+import '../tool/vocabulary_seed.dart';
 import 'dart:math';
 
 import 'package:aaaskola/vocabulary.dart';
-import 'package:aaaskola/vocabulary_grade5.dart';
+import '../tool/vocabulary_grade5_seed.dart';
 import 'package:aaaskola/vocabulary_practice.dart';
 import 'package:flutter_test/flutter_test.dart';
 

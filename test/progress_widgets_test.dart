@@ -1,7 +1,7 @@
+import 'catalog_fixture.dart';
 import 'dart:convert';
 import 'package:aaaskola/english_page.dart';
-import 'package:aaaskola/main.dart';
-import 'package:aaaskola/math_problem.dart';
+import '../tool/math_seed.dart';
 import 'package:aaaskola/progress.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,6 +35,7 @@ void main() {
               'loginAvailable': true,
             }),
             200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }
         if (request.url.path == '/api/stats') {
@@ -44,6 +45,9 @@ void main() {
                 {
                   'day': '2026-09-17',
                   'subject': 'math',
+                  'subjectName': 'Matematika',
+                  'subjectKind': 'math',
+                  'gradeName': '5. třída',
                   'grade': 5,
                   'completed': 3,
                   'correct': 4,
@@ -52,6 +56,9 @@ void main() {
                 {
                   'day': '2026-09-17',
                   'subject': 'english',
+                  'subjectName': 'Angličtina',
+                  'subjectKind': 'vocabulary',
+                  'gradeName': '5. třída',
                   'grade': 5,
                   'completed': 2,
                   'correct': 2,
@@ -60,6 +67,7 @@ void main() {
               ],
             }),
             200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }
         attempts.add(jsonDecode(request.body) as Map<String, dynamic>);
@@ -76,7 +84,7 @@ void main() {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
-      await tester.pumpWidget(AaaSkolaApp(progress: progress));
+      await tester.pumpWidget(testApp(progress: progress));
       await tester.pumpAndSettle();
       await tapText(tester, 'Moje výsledky');
       expect(find.text('17. 9. 2026'), findsOneWidget);
@@ -91,7 +99,7 @@ void main() {
   testWidgets(
     'math records mistakes and counts a two-step chain as one completed exercise',
     (tester) async {
-      await tester.pumpWidget(AaaSkolaApp(progress: progress));
+      await tester.pumpWidget(testApp(progress: progress));
       await tester.pumpAndSettle();
       await tapText(tester, '5. třída');
       await tapText(tester, 'Matematika');

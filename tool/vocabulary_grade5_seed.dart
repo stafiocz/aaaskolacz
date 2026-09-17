@@ -1,4 +1,4 @@
-import 'vocabulary.dart';
+import 'package:aaaskola/vocabulary.dart';
 
 const vocabularyGrade5 = <VocabularyEntry>[
   VocabularyEntry('pencil', 'tužka', 'Školní potřeby', 4),

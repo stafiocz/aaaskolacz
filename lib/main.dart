@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'math_problem.dart';
-import 'english_page.dart';
 import 'school_pages.dart';
-import 'vocabulary_grade5.dart';
+import 'catalog.dart';
 import 'progress.dart';
 import 'progress_widgets.dart';
 
@@ -16,26 +15,30 @@ const _muted = Color(0xFF6E8177);
 const _background = Color(0xFFF3F6EF);
 
 class AaaSkolaApp extends StatefulWidget {
-  const AaaSkolaApp({super.key, this.progress});
+  const AaaSkolaApp({super.key, this.progress, this.catalog});
 
   final ProgressController? progress;
+  final CatalogController? catalog;
 
   @override
   State<AaaSkolaApp> createState() => _AaaSkolaAppState();
 }
 
 class _AaaSkolaAppState extends State<AaaSkolaApp> {
+  late final _catalog = widget.catalog ?? CatalogController();
   late final _progress = widget.progress ?? ProgressController();
 
   @override
   void initState() {
     super.initState();
     _progress.load();
+    if (_catalog.data == null) _catalog.load();
   }
 
   @override
   void dispose() {
     if (widget.progress == null) _progress.dispose();
+    if (widget.catalog == null) _catalog.dispose();
     super.dispose();
   }
 
@@ -44,8 +47,10 @@ class _AaaSkolaAppState extends State<AaaSkolaApp> {
     return MaterialApp(
       title: 'AAA škola',
       debugShowCheckedModeBanner: false,
-      builder: (context, child) =>
-          ProgressScope(controller: _progress, child: child!),
+      builder: (context, child) => ProgressScope(
+        controller: _progress,
+        child: CatalogScope(controller: _catalog, child: child!),
+      ),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: _green),
         scaffoldBackgroundColor: _background,
@@ -55,36 +60,40 @@ class _AaaSkolaAppState extends State<AaaSkolaApp> {
         ),
         useMaterial3: true,
       ),
-      routes: {
-        '/': (_) => const HomePage(),
-        '/vysledky': (_) => const ResultsPage(),
-        '/7-trida': (_) => const GradePage(grade: 7),
-        '/5-trida': (_) => const GradePage(grade: 5),
-        '/3-trida': (_) => const GradePage(grade: 3),
-        '/7-trida/anglictina': (_) => const EnglishPage(),
-        '/3-trida/matematika': (_) => const PracticePage(),
-        '/5-trida/matematika': (_) => const PracticePage(grade: 5),
-        '/5-trida/anglictina': (_) => const EnglishPage(
-          grade: 5,
-          entries: vocabularyGrade5,
-          sourceTitle: 'Introduction a Me! · strany 4–21',
-        ),
-      },
+      onGenerateRoute: (settings) => MaterialPageRoute(
+        settings: settings,
+        builder: (_) => settings.name == '/vysledky'
+            ? const ResultsPage()
+            : CatalogRoute(path: settings.name ?? '/'),
+      ),
     );
   }
 }
 
 class PracticePage extends StatefulWidget {
-  const PracticePage({super.key, this.grade = 3});
+  const PracticePage({
+    super.key,
+    required this.grade,
+    required this.problems,
+    this.subject = 'math',
+    this.subjectName = 'Matematika',
+    this.maxDigits = 3,
+    this.gradeName,
+  });
 
   final int grade;
+  final String? gradeName;
+  final String subject;
+  final String subjectName;
+  final int maxDigits;
+  final List<MathProblem> problems;
 
   @override
   State<PracticePage> createState() => _PracticePageState();
 }
 
 class _PracticePageState extends State<PracticePage> {
-  late final _practice = MixedPractice(grade: widget.grade);
+  late final _practice = MixedPractice(problems: widget.problems);
   final _keyboardFocus = FocusNode();
   late MathProblem _problem;
   String _answer = '';
@@ -92,8 +101,6 @@ class _PracticePageState extends State<PracticePage> {
   bool _solved = false;
   int _correctCount = 0;
   String _exerciseId = newExerciseId();
-
-  PracticeMode get _mode => _problem.mode;
 
   @override
   void initState() {
@@ -112,7 +119,7 @@ class _PracticePageState extends State<PracticePage> {
     setState(() {
       if (_incorrect || _answer == '0') _answer = '';
       _incorrect = false;
-      if (_answer.length < (widget.grade == 5 ? 7 : 3)) _answer += digit;
+      if (_answer.length < widget.maxDigits) _answer += digit;
     });
   }
 
@@ -143,7 +150,7 @@ class _PracticePageState extends State<PracticePage> {
       });
       ProgressScope.of(context)?.record(
         exerciseId: _exerciseId,
-        subject: 'math',
+        subject: widget.subject,
         grade: widget.grade,
         correct: _solved,
         completed: _solved && _problem.nextStep == null,
@@ -178,13 +185,7 @@ class _PracticePageState extends State<PracticePage> {
         ? 'Výborně! To je správně.'
         : _incorrect
         ? 'To ještě není ono. Zkus to znovu.'
-        : _problem.instruction != null
-        ? _problem.instruction!
-        : _mode.hasMissingNumber
-        ? 'Doplň chybějící číslo a potvrď ho.'
-        : _mode == PracticeMode.brackets
-        ? 'Nejdřív spočítej závorku, pak celý příklad.'
-        : 'Napiš výsledek a potvrď ho.';
+        : _problem.instruction ?? 'Napiš výsledek a potvrď ho.';
 
     return Scaffold(
       body: Focus(
@@ -213,7 +214,9 @@ class _PracticePageState extends State<PracticePage> {
                           child: TextButton.icon(
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.arrow_back_rounded),
-                            label: Text('Matematika · ${widget.grade}. třída'),
+                            label: Text(
+                              '${widget.subjectName} · ${widget.gradeName ?? '${widget.grade}. třída'}',
+                            ),
                           ),
                         ),
                         Row(
@@ -324,7 +327,7 @@ class _PracticePageState extends State<PracticePage> {
                                 runSpacing: 8,
                                 children: [
                                   Text(
-                                    _mode.heading,
+                                    _problem.heading,
                                     style: const TextStyle(
                                       color: _muted,
                                       fontSize: 11,
@@ -344,7 +347,7 @@ class _PracticePageState extends State<PracticePage> {
                                 ],
                               ),
                               SizedBox(height: compact ? 16 : 22),
-                              if (widget.grade == 5) ...[
+                              if (widget.maxDigits > 3) ...[
                                 Text(
                                   _problem.question,
                                   key: const ValueKey('problem'),
@@ -515,13 +518,13 @@ class _PracticePageState extends State<PracticePage> {
     value: _answer.isEmpty ? 'Prázdná' : _answer,
     excludeSemantics: true,
     child: Container(
-      width: widget.grade == 5
+      width: widget.maxDigits > 3
           ? double.infinity
           : compact
           ? 80
           : 96,
       height: compact ? 64 : 76,
-      padding: EdgeInsets.symmetric(horizontal: widget.grade == 5 ? 12 : 0),
+      padding: EdgeInsets.symmetric(horizontal: widget.maxDigits > 3 ? 12 : 0),
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: _incorrect ? const Color(0xFFFFF1E7) : const Color(0xFFEDF5EE),
@@ -536,7 +539,7 @@ class _PracticePageState extends State<PracticePage> {
         child: Text(
           _answer.isEmpty
               ? '?'
-              : widget.grade == 5
+              : widget.maxDigits > 3
               ? formatMathNumber(int.parse(_answer))
               : _answer,
           key: const ValueKey('answer'),

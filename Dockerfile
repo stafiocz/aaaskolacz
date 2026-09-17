@@ -3,7 +3,7 @@ FROM node:24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd
 WORKDIR /app/server
 COPY server/package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
-COPY server/*.js server/schema.sql ./
+COPY server/*.js server/*.sql server/content-seed.json ./
 COPY server/public/ ./public/
 COPY build/web/ /app/web/
 ENV NODE_ENV=production WEB_ROOT=/app/web PORT=8080

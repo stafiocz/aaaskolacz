@@ -1,5 +1,5 @@
-import 'package:aaaskola/main.dart';
-import 'package:aaaskola/math_problem.dart';
+import 'catalog_fixture.dart';
+import '../tool/math_seed.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'practice_test.dart' show key, submit, textAt;
 
 Future<void> openGrade5(WidgetTester tester) async {
-  await tester.pumpWidget(const AaaSkolaApp());
+  await tester.pumpWidget(testApp());
   for (final text in ['5. třída', 'Matematika']) {
     await tester.ensureVisible(find.text(text));
     await tester.tap(find.text(text));

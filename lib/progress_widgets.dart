@@ -242,32 +242,36 @@ class _ResultsPageState extends State<ResultsPage> {
           if (rows.isEmpty)
             const Text('Zatím žádné procvičování.')
           else
-            for (final subject in ['math', 'english'])
-              for (final grade in [3, 5, 7])
-                if (rows.any(
-                  (r) => r['subject'] == subject && r['grade'] == grade,
-                )) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    '${subject == 'math' ? 'Matematika' : 'Angličtina'} · $grade. třída',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+            for (final key
+                in rows
+                    .map((r) => '${r['subject']}/${r['grade']}')
+                    .toSet()) ...[
+              const SizedBox(height: 8),
+              Text(
+                _label(
+                  rows.firstWhere(
+                    (r) => '${r['subject']}/${r['grade']}' == key,
                   ),
-                  Text(
-                    _counts(
-                      rows.where(
-                        (r) => r['subject'] == subject && r['grade'] == grade,
-                      ),
-                      subject,
-                    ),
-                  ),
-                ],
+                ),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              Text(
+                _counts(
+                  rows.where((r) => '${r['subject']}/${r['grade']}' == key),
+                ),
+              ),
+            ],
         ],
       ),
     ),
   );
 
-  String _counts(Iterable<Map<String, dynamic>> rows, String subject) {
+  String _label(Map<String, dynamic> row) =>
+      '${row['subjectName'] ?? row['subject']} · ${row['gradeName'] ?? "${row['grade']}. třída"}';
+
+  String _counts(Iterable<Map<String, dynamic>> rows) {
+    final math = rows.first['subjectKind'] == 'math';
     int sum(String key) => rows.fold(0, (total, r) => total + (r[key] as int));
-    return '${subject == 'math' ? 'Dokončeno příkladů' : 'Zvládnuto slovíček'}: ${sum('completed')}\nSprávně: ${sum('correct')}   ·   Chybně: ${sum('incorrect')}';
+    return '${math ? 'Dokončeno příkladů' : 'Zvládnuto slovíček'}: ${sum('completed')}\nSprávně: ${sum('correct')}   ·   Chybně: ${sum('incorrect')}';
   }
 }
