@@ -23,8 +23,10 @@ Procvičování automaticky míchá všechny typy příkladů:
 - **Doplň dělení:** například `12 : ? = 4`, chybějící dělitel 1–9.
 
 Každý příklad má jednoznačnou celočíselnou odpověď. Nikdy se nedělí nulou.
-Každá pětice obsahuje všechny typy v náhodném pořadí; stejný typ nenásleduje
-hned po sobě ani na přechodu mezi pěticemi. Oblasti se ručně nevybírají.
+Mix obsahuje také 24 příkladů na sčítání a odčítání do 100 z fotografií sešitu
+ze 17. září. Výsledky se počítají z operandů, nepřebírají chybné odpovědi z fotek.
+Každá šestice obsahuje všechny typy v náhodném pořadí; stejný typ nenásleduje
+hned po sobě ani na přechodu mezi šesticemi. Oblasti se ručně nevybírají.
 
 - Náhodný příklad, velká klávesnice na displeji a kontrola odpovědi.
 - Po chybě zůstane stejný příklad; první nová číslice nahradí chybnou odpověď.

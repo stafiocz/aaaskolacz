@@ -65,7 +65,7 @@ class GradePage extends StatelessWidget {
             title: 'Matematika',
             subtitle: grade == 5
                 ? 'Miliony · sčítání, odčítání, násobení, dělení a početní řetězce. Vše v jednom mixu.'
-                : 'Násobilka, dělení, závorky a doplňování čísel. Vše v jednom mixu.',
+                : 'Sčítání a odčítání do 100, násobilka, dělení, závorky a doplňování čísel. Vše v jednom mixu.',
             icon: Icons.calculate_outlined,
             onTap: () =>
                 Navigator.pushNamed(context, '/$grade-trida/matematika'),

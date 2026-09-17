@@ -49,6 +49,8 @@ int result(WidgetTester tester) {
         : factors[1] - factors[2];
     return signs[0] == '+' ? factors[0] + inner : factors[0] - inner;
   }
+  if (question.contains('+')) return factors[0] + factors[1];
+  if (question.contains('−')) return factors[0] - factors[1];
   return question.contains('×')
       ? factors[0] * factors[1]
       : factors[0] ~/ factors[1];
@@ -128,7 +130,7 @@ void main() {
     (tester) async {
       await openMath(tester);
       final modes = <PracticeMode>{};
-      for (var count = 1; count <= 25; count++) {
+      for (var count = 1; count <= grade3Modes.length * 5; count++) {
         final original = textAt(tester, 'problem');
         modes.add(modeAt(tester));
         await answerCorrectly(tester);
@@ -136,7 +138,7 @@ void main() {
         await submit(tester);
         expect(textAt(tester, 'problem'), isNot(original));
         expect(textAt(tester, 'answer'), '?');
-        if (count % 5 == 0) {
+        if (count % grade3Modes.length == 0) {
           expect(modes, unorderedEquals(grade3Modes));
           modes.clear();
         }

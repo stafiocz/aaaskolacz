@@ -4,6 +4,7 @@ enum PracticeMode {
   multiplication('MALÁ NÁSOBILKA'),
   division('DĚLENÍ BEZE ZBYTKU'),
   brackets('SČÍTÁNÍ A ODČÍTÁNÍ'),
+  additionSubtraction('SČÍTÁNÍ A ODČÍTÁNÍ DO 100'),
   missingFactor('DOPLŇ NÁSOBENÍ'),
   missingDivisor('DOPLŇ DĚLENÍ'),
   largeAddition('SČÍTÁNÍ VELKÝCH ČÍSEL'),
@@ -26,8 +27,36 @@ const grade3Modes = [
   PracticeMode.multiplication,
   PracticeMode.division,
   PracticeMode.brackets,
+  PracticeMode.additionSubtraction,
   PracticeMode.missingFactor,
   PracticeMode.missingDivisor,
+];
+
+const notebookProblems = <(int, String, int)>[
+  (70, '−', 46),
+  (58, '+', 14),
+  (64, '−', 9),
+  (88, '+', 6),
+  (72, '−', 30),
+  (41, '+', 38),
+  (15, '+', 8),
+  (19, '+', 24),
+  (17, '−', 12),
+  (94, '−', 62),
+  (100, '−', 36),
+  (64, '+', 21),
+  (97, '−', 6),
+  (42, '+', 27),
+  (18, '+', 30),
+  (86, '−', 24),
+  (72, '−', 19),
+  (36, '+', 18),
+  (84, '−', 60),
+  (44, '+', 18),
+  (19, '−', 7),
+  (31, '+', 42),
+  (58, '−', 42),
+  (77, '−', 62),
 ];
 
 const grade5Modes = [
@@ -107,6 +136,15 @@ class MathProblem {
 
   static MathProblem _generate(PracticeMode mode, Random random) {
     switch (mode) {
+      case PracticeMode.additionSubtraction:
+        final (left, sign, right) =
+            notebookProblems[random.nextInt(notebookProblems.length)];
+        return MathProblem(
+          mode,
+          '$left $sign $right =',
+          '',
+          sign == '+' ? left + right : left - right,
+        );
       case PracticeMode.largeAddition:
       case PracticeMode.largeSubtraction:
         final (scale, limit) = [
