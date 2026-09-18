@@ -11,12 +11,14 @@ class VocabularyDeck {
   final Random _random;
   final List<VocabularyEntry> _remaining = [];
 
-  List<VocabularyEntry> nextRound() {
+  List<VocabularyEntry> nextRound({Set<String> learned = const {}}) {
+    _remaining.removeWhere((word) => learned.contains(word.id));
     if (_remaining.isEmpty) {
-      _remaining.addAll(_entries);
+      _remaining.addAll(_entries.where((word) => !learned.contains(word.id)));
+      if (_remaining.isEmpty) _remaining.addAll(_entries);
       _remaining.shuffle(_random);
     }
-    final count = min(8, _remaining.length);
+    final count = min(15, _remaining.length);
     final round = _remaining.take(count).toList();
     _remaining.removeRange(0, count);
     return round;

@@ -4,21 +4,24 @@ class VocabularyEntry {
     this.czech,
     this.topic,
     this.page, {
+    this.id,
     this.alternatives = const [],
   });
 
   final String english;
+  final String? id;
   final String czech;
   final String topic;
   final int page;
   final List<String> alternatives;
 
-  factory VocabularyEntry.fromJson(Map<String, dynamic> data) =>
+  factory VocabularyEntry.fromJson(Map<String, dynamic> data, {String? id}) =>
       VocabularyEntry(
         data['english'] as String,
         data['czech'] as String,
         data['topic'] as String,
         data['page'] as int,
+        id: id,
         alternatives: (data['alternatives'] as List).cast<String>(),
       );
 

@@ -20,6 +20,7 @@ export async function migrate(pool) {
         ALTER TABLE exercises ADD CONSTRAINT exercises_course_fk FOREIGN KEY (grade,subject) REFERENCES school_courses(grade,subject);
         INSERT INTO content_migrations(version) VALUES ('catalog-v1')`);
     }
+    await client.query('ALTER TABLE exercises ADD COLUMN IF NOT EXISTS practice_item_id text');
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -49,17 +50,17 @@ export async function login(pool, identity, previousToken) {
 }
 
 export async function saveAttempt(pool, userId, attempt) {
-  const { id, exerciseId, subject, grade, correct, completed, occurredAt } = attempt;
+  const { id, exerciseId, subject, grade, correct, completed, occurredAt, itemId = null } = attempt;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`INSERT INTO exercises(user_id, id, subject, grade) VALUES ($1, $2, $3, $4)
-      ON CONFLICT DO NOTHING`, [userId, exerciseId, subject, grade]);
+    await client.query(`INSERT INTO exercises(user_id, id, subject, grade, practice_item_id) VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT DO NOTHING`, [userId, exerciseId, subject, grade, itemId]);
     const { rows: [exercise] } = await client.query(
       'SELECT * FROM exercises WHERE user_id = $1 AND id = $2 FOR UPDATE', [userId, exerciseId]);
     const { rows: [existing] } = await client.query(
       'SELECT * FROM attempts WHERE user_id = $1 AND id = $2', [userId, id]);
-    if (exercise.subject !== subject || exercise.grade !== grade ||
+    if (exercise.subject !== subject || exercise.grade !== grade || exercise.practice_item_id !== itemId ||
         (existing && (existing.exercise_id !== exerciseId || existing.correct !== correct || existing.completed !== completed ||
           existing.answered_at.getTime() !== Date.parse(occurredAt))) ||
         (!existing && exercise.completed)) {
@@ -77,6 +78,26 @@ export async function saveAttempt(pool, userId, attempt) {
     await client.query('ROLLBACK');
     throw error;
   } finally { client.release(); }
+}
+
+export async function dailyGoals(pool, userId, now = new Date()) {
+  const { rows: [result] } = await pool.query(`
+    WITH day AS (SELECT ($2::timestamptz AT TIME ZONE 'Europe/Prague')::date AS date),
+    completed AS (
+      SELECT e.id, e.practice_item_id, s.kind
+      FROM attempts a JOIN exercises e ON e.user_id=a.user_id AND e.id=a.exercise_id
+      JOIN school_subjects s ON s.id=e.subject CROSS JOIN day
+      WHERE a.user_id=$1 AND a.completed
+        AND a.answered_at >= day.date::timestamp AT TIME ZONE 'Europe/Prague'
+        AND a.answered_at < (day.date + 1)::timestamp AT TIME ZONE 'Europe/Prague'
+    )
+    SELECT to_char(day.date, 'YYYY-MM-DD') AS day,
+      (day.date + 1)::timestamp AT TIME ZONE 'Europe/Prague' AS "resetsAt",
+      (SELECT count(*)::int FROM completed WHERE kind='math') AS math,
+      (SELECT count(DISTINCT coalesce(practice_item_id, id::text))::int FROM completed WHERE kind='vocabulary') AS vocabulary,
+      ARRAY(SELECT DISTINCT practice_item_id FROM completed WHERE kind='vocabulary' AND practice_item_id IS NOT NULL) AS "wordIds"
+    FROM day`, [userId, now]);
+  return { ...result, target: 15 };
 }
 
 export async function dailyStats(pool, userId, from, to) {

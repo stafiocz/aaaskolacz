@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { dailyStats, hashToken, login, saveAttempt, secretToken } from './database.js';
+import { dailyGoals, dailyStats, hashToken, login, saveAttempt, secretToken } from './database.js';
 import { verifyGoogle } from './auth.js';
 import { readCatalog } from './catalog.js';
 
@@ -87,6 +87,7 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
     if (!uuid.test(body.id) || !uuid.test(body.exerciseId) ||
         typeof body.subject !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/.test(body.subject) ||
         !Number.isInteger(body.grade) || body.grade < 1 || body.grade > 99 ||
+        (body.itemId != null && (typeof body.itemId !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/.test(body.itemId))) ||
         typeof body.correct !== 'boolean' || typeof body.completed !== 'boolean' || (body.completed && !body.correct) ||
         typeof body.occurredAt !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3,6}Z$/.test(body.occurredAt) ||
         !Number.isFinite(Date.parse(body.occurredAt)) || Date.parse(body.occurredAt) > Date.now() + 300_000) {
@@ -95,8 +96,15 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
     if (!(await pool.query('SELECT 1 FROM school_courses WHERE grade=$1 AND subject=$2', [body.grade, body.subject])).rowCount) {
       return res.status(400).json({ error: 'Unknown course' });
     }
+    if (body.itemId != null && !(await pool.query(
+      'SELECT 1 FROM practice_items WHERE id=$1 AND grade=$2 AND subject=$3', [body.itemId, body.grade, body.subject])).rowCount) {
+      return res.status(400).json({ error: 'Unknown practice item' });
+    }
     const result = await saveAttempt(pool, req.session.id, body);
     res.status(result === 'conflict' ? 409 : result === 'created' ? 201 : 200).json({ result });
+  });
+  app.get('/api/daily-goals', async (req, res) => {
+    res.json(await dailyGoals(pool, req.session.id));
   });
   app.get('/api/stats', async (req, res) => {
     const { from, to } = req.query;

@@ -98,6 +98,7 @@ class HomePage extends StatelessWidget {
       children: [
         const SchoolBrand(),
         const AccountCard(),
+        const DailyGoalsCard(),
         const SizedBox(height: 24),
         const Text(
           'Co dnes procvičíme?',
@@ -142,6 +143,7 @@ class GradePage extends StatelessWidget {
     return SchoolPage(
       title: gradeName,
       children: [
+        const DailyGoalsCard(),
         const Text(
           'Vyber si předmět',
           style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),

@@ -227,11 +227,11 @@ void main() {
     final seen = <VocabularyEntry>[];
     while (seen.length < vocabularyGrade5.length) {
       final round = deck.nextRound();
-      expect(round.length, inInclusiveRange(1, 8));
+      expect(round.length, inInclusiveRange(1, 15));
       expect(round.toSet().intersection(seen.toSet()), isEmpty);
       seen.addAll(round);
     }
     expect(seen, unorderedEquals(vocabularyGrade5));
-    expect(deck.nextRound(), hasLength(8));
+    expect(deck.nextRound(), hasLength(15));
   });
 }

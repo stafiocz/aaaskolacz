@@ -1,4 +1,5 @@
 import 'catalog_fixture.dart';
+import 'daily_goals_fixture.dart';
 import 'dart:convert';
 import 'package:aaaskola/english_page.dart';
 import '../tool/math_seed.dart';
@@ -22,6 +23,9 @@ void main() {
       readPending: (_) => null,
       writePending: (_, _) {},
       client: MockClient((request) async {
+        if (request.url.path == '/api/daily-goals') {
+          return http.Response(jsonEncode(goalsData()), 200);
+        }
         if (request.url.path == '/api/me') {
           return http.Response(
             jsonEncode({
@@ -75,7 +79,6 @@ void main() {
       }),
     );
   });
-  tearDown(() => progress.dispose());
 
   testWidgets(
     'daily results show separate subjects, counts and empty days on a narrow screen',
@@ -94,6 +97,8 @@ void main() {
       expect(find.textContaining('Správně: 4   ·   Chybně: 2'), findsWidgets);
       expect(find.text('Zatím žádné procvičování.'), findsWidgets);
       expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      progress.dispose();
     },
   );
   testWidgets(
@@ -139,6 +144,8 @@ void main() {
         ),
         hasLength(1),
       );
+      await tester.pumpWidget(const SizedBox());
+      progress.dispose();
     },
   );
   testWidgets(
@@ -166,6 +173,8 @@ void main() {
         attempts.every((a) => a['subject'] == 'english' && a['grade'] == 5),
         true,
       );
+      await tester.pumpWidget(const SizedBox());
+      progress.dispose();
     },
   );
 }

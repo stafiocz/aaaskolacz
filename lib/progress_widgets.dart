@@ -3,6 +3,98 @@ import 'package:flutter/material.dart';
 import 'progress.dart';
 import 'school_widgets.dart';
 
+class DailyGoalsCard extends StatelessWidget {
+  const DailyGoalsCard({super.key, this.kind});
+  final String? kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = ProgressScope.of(context);
+    final goals = progress?.goals;
+    final signedIn = progress?.signedIn ?? false;
+    return Card(
+      color: const Color(0xFFE8F0E6),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              kind == null && goals?.completed == true
+                  ? 'Dnešní úkoly jsou splněné!'
+                  : 'Dnešní úkol${kind == null ? 'y' : ''}',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            ),
+            if (kind == null || kind == 'vocabulary')
+              _GoalRow(
+                label: 'Slovíčka',
+                count: goals?.vocabulary,
+                target: goals?.target ?? 15,
+              ),
+            if (kind == null || kind == 'math')
+              _GoalRow(
+                label: 'Příklady',
+                count: goals?.math,
+                target: goals?.target ?? 15,
+              ),
+            if (!signedIn)
+              const Text('Přihlas se a ukládej si plnění denních úkolů.'),
+            if (signedIn && goals == null && progress?.goalsError == null)
+              const Text('Načítám dnešní pokrok…'),
+            if (signedIn && progress?.goalsError != null) ...[
+              Text(progress!.goalsError!),
+              TextButton(
+                onPressed: progress.refreshGoals,
+                child: const Text('Obnovit denní pokrok'),
+              ),
+            ],
+            if (signedIn && progress!.pendingCount > 0)
+              const Text('Pokrok se doplní po uložení odpovědí.'),
+            if (kind == null)
+              const Text(
+                'Počítají se správně dokončené úlohy. Každý den začínáme znovu.',
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GoalRow extends StatelessWidget {
+  const _GoalRow({
+    required this.label,
+    required this.count,
+    required this.target,
+  });
+  final String label;
+  final int? count;
+  final int target;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          count == null
+              ? '$label: cíl $target'
+              : '$label: ${count!.clamp(0, target)} / $target${count! >= target ? ' · Splněno!' : ''}',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        if (count != null) ...[
+          const SizedBox(height: 6),
+          LinearProgressIndicator(
+            value: (count! / target).clamp(0, 1),
+            semanticsLabel: label,
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
 class AccountCard extends StatelessWidget {
   const AccountCard({super.key});
 

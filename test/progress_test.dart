@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:aaaskola/progress.dart';
+import 'daily_goals_fixture.dart';
 
 void main() {
   final saved = <String, String>{};
@@ -22,6 +23,9 @@ void main() {
       readPending: (user) => saved[user],
       writePending: (user, data) => saved[user] = data,
       client: MockClient((request) async {
+        if (request.url.path == '/api/daily-goals') {
+          return http.Response(jsonEncode(goalsData()), 200);
+        }
         if (request.url.path == '/api/me') {
           return http.Response(
             jsonEncode({
@@ -123,6 +127,8 @@ void main() {
                 '{"user":{"id":"alice"},"csrf":"csrf","loginAvailable":true}',
                 200,
               )
+            : request.url.path == '/api/daily-goals'
+            ? http.Response(jsonEncode(goalsData()), 200)
             : completion.future,
       ),
     );

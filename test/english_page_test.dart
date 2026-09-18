@@ -95,7 +95,7 @@ void main() {
     expect(find.text('s. 4'), findsWidgets);
   });
 
-  testWidgets('grade 5 quiz completes eight words and offers new ones', (
+  testWidgets('grade 5 quiz completes fifteen words and offers new ones', (
     tester,
   ) async {
     await tester.pumpWidget(testApp());
@@ -103,7 +103,7 @@ void main() {
     await tapText(tester, 'Angličtina');
     await tapText(tester, 'Rovnou se vyzkoušet');
     final seen = <String>{};
-    for (var index = 0; index < 8; index++) {
+    for (var index = 0; index < 15; index++) {
       final question = prompt(tester);
       expect(seen.add(question), isTrue);
       final word = vocabularyGrade5.singleWhere((e) => e.czech == question);
@@ -113,7 +113,7 @@ void main() {
       await tapText(tester, 'Pokračovat');
     }
     expect(find.text('Kolo je hotové!'), findsOneWidget);
-    expect(find.textContaining('Na první pokus: 8 z 8'), findsOneWidget);
+    expect(find.textContaining('Na první pokus: 15 z 15'), findsOneWidget);
     await tapText(tester, 'Další kolo s kartičkami');
     await tapText(tester, 'Ukázat překlad');
     final next = tester

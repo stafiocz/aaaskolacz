@@ -52,7 +52,9 @@ class _EnglishPageState extends State<EnglishPage> {
 
   void _start({bool study = true}) {
     setState(() {
-      _round = _deck.nextRound();
+      _round = _deck.nextRound(
+        learned: ProgressScope.of(context)?.goals?.wordIds ?? {},
+      );
       _exerciseIds = {for (final word in _round) word: newExerciseId()};
       _card = 0;
       _revealed = false;
@@ -70,6 +72,7 @@ class _EnglishPageState extends State<EnglishPage> {
     setState(() => _quiz.check(reveal ? '' : _answer.text));
     ProgressScope.of(context)?.record(
       exerciseId: _exerciseIds[_quiz.current]!,
+      itemId: _quiz.current.id,
       subject: widget.subject,
       grade: widget.grade,
       correct: _quiz.correct!,
@@ -92,12 +95,15 @@ class _EnglishPageState extends State<EnglishPage> {
   Widget build(BuildContext context) => SchoolPage(
     title:
         '${widget.subjectName} · ${widget.gradeName ?? '${widget.grade}. třída'}',
-    children: switch (_stage) {
-      _Stage.intro => _intro(),
-      _Stage.cards => _cards(),
-      _Stage.quiz => _question(),
-      _Stage.done => _summary(),
-    },
+    children: [
+      const DailyGoalsCard(kind: 'vocabulary'),
+      ...switch (_stage) {
+        _Stage.intro => _intro(),
+        _Stage.cards => _cards(),
+        _Stage.quiz => _question(),
+        _Stage.done => _summary(),
+      },
+    ],
   );
 
   List<Widget> _intro() => [
@@ -113,7 +119,7 @@ class _EnglishPageState extends State<EnglishPage> {
     const SizedBox(height: 24),
     _panel([
       const Text(
-        'Jedno kolo, 8 slovíček',
+        'Denní úkol: 15 slovíček',
         style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
       ),
       const SizedBox(height: 16),
@@ -135,7 +141,7 @@ class _EnglishPageState extends State<EnglishPage> {
     ),
     const SizedBox(height: 18),
     const Text(
-      'Témata se míchají. Další kolo nabídne nová slovíčka. Průběh platí, dokud zůstaneš v tomto procvičování.',
+      'V kole je až 15 slovíček. Témata se míchají. Po přihlášení se dnešní zvládnutá slovíčka ukládají a další kolo nabídne dosud nezvládnutá.',
       style: TextStyle(color: Color(0xFF6E8177), height: 1.5),
     ),
     const SizedBox(height: 12),

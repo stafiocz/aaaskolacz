@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import pg from 'pg';
 import { createApp } from './app.js';
-import { migrate, hashToken } from './database.js';
+import { migrate, hashToken, dailyGoals } from './database.js';
 
 assert.match(process.env.PGDATABASE ?? '', /_test$/, 'Tests require a dedicated *_test database');
 const pool = new pg.Pool();
@@ -56,6 +56,7 @@ test('health checks database; guest cannot read or write results', async () => {
   assert.equal((await fetch(base + '/healthz')).status, 200);
   assert.equal((await (await fetch(base + '/api/me')).json()).user, null);
   assert.equal((await fetch(base + '/api/stats')).status, 401);
+  assert.equal((await fetch(base + '/api/daily-goals')).status, 401);
   assert.equal((await fetch(base + '/api/attempts', { method: 'POST' })).status, 401);
 });
 test('Google login requires same origin, matching nonce cookie and a verified identity', async () => {
@@ -140,10 +141,12 @@ test('catalog migration preserves legacy accounts, sessions and results and neve
   const isolated = new pg.Pool({ options: `-c search_path=${schema}` });
   try {
     const { readFile } = await import('node:fs/promises');
-    const { login, saveAttempt, dailyStats } = await import('./database.js');
+    const { login, dailyStats } = await import('./database.js');
     await isolated.query(await readFile(new URL('./schema.sql', import.meta.url), 'utf8'));
     const session = await login(isolated, { sub: 'legacy', name: 'Legacy', email: 'legacy@example.test' });
-    await saveAttempt(isolated, session.user.id, attempt());
+    const legacy = attempt();
+    await isolated.query("INSERT INTO exercises(user_id,id,subject,grade,completed) VALUES ($1,$2,'math',5,true)", [session.user.id, legacy.exerciseId]);
+    await isolated.query('INSERT INTO attempts VALUES ($1,$2,$3,true,true,$4)', [session.user.id, legacy.id, legacy.exerciseId, legacy.occurredAt]);
     await migrate(isolated);
     assert.equal((await dailyStats(isolated, session.user.id, '2026-03-01', '2026-03-31'))[0].correct, 1);
     assert.equal((await isolated.query('SELECT count(*)::int n FROM sessions')).rows[0].n, 1);
@@ -157,6 +160,65 @@ test('catalog migration preserves legacy accounts, sessions and results and neve
     await isolated.end();
     await pool.query(`DROP SCHEMA ${schema} CASCADE`);
   }
+});
+
+test('daily goals count completed math and distinct words, persist across logins and isolate users', async () => {
+  const session = await signIn();
+  const { rows: words } = await pool.query("SELECT id FROM practice_items WHERE grade=5 AND subject='english' ORDER BY id LIMIT 16");
+  const occurredAt = new Date().toISOString();
+  const read = async (owner = session) => {
+    const response = await fetch(base + '/api/daily-goals', { headers: { Cookie: owner.cookie } });
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  for (let n = 0; n < 14; n++) {
+    assert.equal((await post('/api/attempts', session, attempt({ occurredAt, grade: n % 2 ? 3 : 5 }))).status, 201);
+    assert.equal((await post('/api/attempts', session, attempt({ occurredAt, subject: 'english', itemId: words[n].id }))).status, 201);
+  }
+  const chain = randomUUID();
+  await post('/api/attempts', session, attempt({ occurredAt, exerciseId: chain, completed: false }));
+  await post('/api/attempts', session, attempt({ occurredAt, correct: false, completed: false }));
+  await post('/api/attempts', session, attempt({ occurredAt, subject: 'english', itemId: words[0].id }));
+  let result = await read();
+  assert.equal(result.target, 15); assert.equal(result.math, 14); assert.equal(result.vocabulary, 14);
+  const completed = attempt({ occurredAt, exerciseId: chain });
+  assert.equal((await post('/api/attempts', session, completed)).status, 201);
+  assert.equal((await post('/api/attempts', session, completed)).status, 200);
+  await post('/api/attempts', session, attempt({ occurredAt, subject: 'english', itemId: words[14].id }));
+  result = await read(await signIn());
+  assert.equal(result.math, 15); assert.equal(result.vocabulary, 15);
+  assert.equal(result.wordIds.length, 15);
+  await post('/api/attempts', session, attempt({ occurredAt }));
+  await post('/api/attempts', session, attempt({ occurredAt, subject: 'english', itemId: words[15].id }));
+  assert.equal((await read()).math, 16); assert.equal((await read()).vocabulary, 16);
+  const bob = await read(await signIn('bob'));
+  assert.equal(bob.math, 0); assert.equal(bob.vocabulary, 0);
+});
+
+test('daily goals reset at Czech midnight including daylight saving and count old offline events on their day', async () => {
+  const session = await signIn();
+  for (const occurredAt of ['2026-03-28T22:59:59.000Z', '2026-03-28T23:00:00.000Z', '2026-03-29T21:59:59.000Z', '2026-03-29T22:00:00.000Z']) {
+    await post('/api/attempts', session, attempt({ occurredAt }));
+  }
+  const spring = await dailyGoals(pool, session.user.id, new Date('2026-03-29T12:00:00Z'));
+  assert.equal(spring.day, '2026-03-29'); assert.equal(spring.math, 2);
+  assert.equal(spring.resetsAt.toISOString(), '2026-03-29T22:00:00.000Z');
+  const next = await dailyGoals(pool, session.user.id, spring.resetsAt);
+  assert.equal(next.day, '2026-03-30'); assert.equal(next.math, 1);
+  const autumn = await dailyGoals(pool, session.user.id, new Date('2026-10-25T12:00:00Z'));
+  assert.equal(autumn.resetsAt.toISOString(), '2026-10-25T23:00:00.000Z');
+  assert.equal(autumn.math, 0);
+});
+
+test('word identity must belong to the course and cannot change on a retry', async () => {
+  const session = await signIn();
+  const { rows: words } = await pool.query("SELECT id FROM practice_items WHERE grade=5 AND subject='english' ORDER BY id LIMIT 2");
+  for (const itemId of ['missing', words[0].id, 123]) {
+    assert.equal((await post('/api/attempts', session, attempt({ itemId }))).status, 400);
+  }
+  const payload = attempt({ subject: 'english', itemId: words[0].id });
+  assert.equal((await post('/api/attempts', session, payload)).status, 201);
+  assert.equal((await post('/api/attempts', session, { ...payload, itemId: words[1].id })).status, 409);
 });
 
 async function importTransaction(content, check = false) {

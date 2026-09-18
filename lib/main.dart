@@ -24,22 +24,29 @@ class AaaSkolaApp extends StatefulWidget {
   State<AaaSkolaApp> createState() => _AaaSkolaAppState();
 }
 
-class _AaaSkolaAppState extends State<AaaSkolaApp> {
+class _AaaSkolaAppState extends State<AaaSkolaApp> with WidgetsBindingObserver {
   late final _catalog = widget.catalog ?? CatalogController();
   late final _progress = widget.progress ?? ProgressController();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _progress.load();
     if (_catalog.data == null) _catalog.load();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (widget.progress == null) _progress.dispose();
     if (widget.catalog == null) _catalog.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _progress.refreshGoals();
   }
 
   @override
@@ -209,6 +216,7 @@ class _PracticePageState extends State<PracticePage> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const SaveStatus(),
+                        const DailyGoalsCard(kind: 'math'),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(

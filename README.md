@@ -76,7 +76,7 @@ uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
 
 ### Jak se procvičuje angličtina v obou třídách
 
-- Kolo obsahuje nejvýše 8 položek napříč tématy. V rámci návštěvy se postupně
+- Kolo obsahuje nejvýše 15 položek napříč tématy. V rámci návštěvy se postupně
   projde celý slovník, teprve potom se začne znovu.
 - Kartička ukáže anglický výraz; dítě si vybaví český význam a odhalí překlad.
 - Po kartičkách následuje zkoušení v náhodném pořadí: české zadání a psaná anglická
@@ -87,7 +87,8 @@ uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
 - Kontrola toleruje velká písmena, mezery, spojovníky, typografické apostrofy
   a koncovou interpunkci; běžné alternativy jsou uvedené přímo ve slovníku.
 - Průběh se uchovává jen při otevřeném procvičování. Obnovení stránky nebo návrat
-  na předměty začne novou návštěvu. Němčina je plánovaným rozšířením.
+  na předměty začne nové kolo, uložený denní pokrok přihlášeného účtu zůstává.
+  Dnes zvládnutá slovíčka se při výběru dalšího kola vynechají, dokud zbývají jiná.
 
 Procvičování funguje i bez účtu. Na webu lze přes Google ukládat výsledky;
 nabídka a obsah se načítají z databáze, míchání a kontrola odpovědí běží lokálně.
@@ -117,6 +118,27 @@ generátory v `tool/` slouží pouze k vytvoření výchozí migrace příkazem
 `dart run tool/export_content.dart`; nejsou součástí nabídky běžící aplikace.
 
 ## Přihlášení a denní výsledky
+
+### Denní úkoly
+
+Každý účet má denní cíl **15 správně napsaných slovíček** a **15 správně
+dokončených příkladů**, společný napříč třídami. Ukazatele jsou na úvodu,
+ve výběru předmětů a u příslušného procvičování. Po dosažení cíle se zobrazí
+**Splněno!**; procvičovat lze dál a historie uchová i výsledky nad cílem.
+
+Chyby a prohlížení kartiček se do cíle nepočítají. Oprava chyby se započítá,
+matematický řetězec až po posledním kroku. Stejné slovíčko (ID zadání) se za den
+započítá jen jednou, i při novém kole či opětovném přihlášení. U starších výsledků
+bez ID slovíčka se použije počet dokončených úloh zachovaný v historii.
+
+`GET /api/daily-goals` odvozuje pokrok z uložených odpovědí přihlášeného účtu;
+žádný denní úkol se nemusí ručně zakládat. Nový den začíná o půlnoci v
+`Europe/Prague`, včetně změn letního času. Aplikace obnovuje pokrok po uložení,
+při návratu do aplikace, každou minutu a o půlnoci. Neodeslané odpovědi se
+započítají až po úspěšném uložení do svého původního dne. Host vidí cíle,
+pro ukládání jejich plnění se musí přihlásit.
+
+### Historie výsledků
 
 Na úvodu je **Přihlásit se přes Google** a po přihlášení **Moje výsledky**.
 Přehled pro každý den zvoleného měsíce odděluje třídy a předměty:

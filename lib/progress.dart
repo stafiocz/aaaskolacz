@@ -17,18 +17,39 @@ String newExerciseId() {
   return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
 }
 
+class DailyGoals {
+  DailyGoals.fromJson(Map<String, dynamic> data)
+    : day = DateTime.parse(data['day'] as String),
+      resetsAt = DateTime.parse(data['resetsAt'] as String),
+      target = data['target'] as int,
+      math = data['math'] as int,
+      vocabulary = data['vocabulary'] as int,
+      wordIds = (data['wordIds'] as List).cast<String>().toSet();
+
+  final DateTime day;
+  final DateTime resetsAt;
+  final int target;
+  final int math;
+  final int vocabulary;
+  final Set<String> wordIds;
+  bool get completed => math >= target && vocabulary >= target;
+}
+
 class ProgressController extends ChangeNotifier {
   ProgressController({
     http.Client? client,
     Uri? baseUrl,
+    DateTime Function()? now,
     this.enabled = kIsWeb,
     this.readPending = storage.readPending,
     this.writePending = storage.writePending,
     this.openLogin = storage.openLogin,
   }) : _client = client ?? http.Client(),
+       _now = now ?? DateTime.now,
        _base = baseUrl ?? Uri.base;
 
   final http.Client _client;
+  final DateTime Function() _now;
   final Uri _base;
   final bool enabled;
   final String? Function(String) readPending;
@@ -45,6 +66,10 @@ class ProgressController extends ChangeNotifier {
   DateTime today = DateTime.now();
   bool _disposed = false;
   Timer? _retry;
+  Timer? _goalsTimer;
+  int _goalsVersion = 0;
+  DailyGoals? goals;
+  String? goalsError;
   final List<Map<String, dynamic>> _pending = [];
   int get pendingCount => _pending.length;
   bool get signedIn => user != null;
@@ -67,7 +92,9 @@ class ProgressController extends ChangeNotifier {
           .timeout(const Duration(seconds: 15));
       if (response.statusCode != 200) throw StateError('Session unavailable');
       final body = jsonDecode(response.body) as Map<String, dynamic>;
-      user = body['user'] as Map<String, dynamic>?;
+      final nextUser = body['user'] as Map<String, dynamic>?;
+      if (nextUser?['id'] != user?['id']) _clearGoals();
+      user = nextUser;
       _csrf = body['csrf'] as String?;
       loginAvailable = body['loginAvailable'] == true;
       today =
@@ -88,7 +115,10 @@ class ProgressController extends ChangeNotifier {
     ready = true;
     _loading = false;
     _changed();
-    if (signedIn) unawaited(flush());
+    if (signedIn) {
+      await flush();
+      await refreshGoals();
+    }
   }
 
   void record({
@@ -97,6 +127,7 @@ class ProgressController extends ChangeNotifier {
     required int grade,
     required bool correct,
     required bool completed,
+    String? itemId,
   }) {
     if (!signedIn) return;
     _pending.add({
@@ -106,7 +137,8 @@ class ProgressController extends ChangeNotifier {
       'grade': grade,
       'correct': correct,
       'completed': completed,
-      'occurredAt': DateTime.now().toUtc().toIso8601String(),
+      'itemId': ?itemId,
+      'occurredAt': _now().toUtc().toIso8601String(),
     });
     _persist();
     _changed();
@@ -141,6 +173,7 @@ class ProgressController extends ChangeNotifier {
             )
             .timeout(const Duration(seconds: 15));
         if (response.statusCode == 401 || response.statusCode == 403) {
+          _clearGoals();
           user = null;
           _csrf = null;
           error =
@@ -160,6 +193,59 @@ class ProgressController extends ChangeNotifier {
     } finally {
       _saving = false;
       _changed();
+    }
+    if (signedIn) unawaited(refreshGoals());
+  }
+
+  void _clearGoals() {
+    _goalsVersion++;
+    _goalsTimer?.cancel();
+    goals = null;
+    goalsError = null;
+  }
+
+  Future<void> refreshGoals() async {
+    if (!enabled || !signedIn || _disposed) return;
+    final userId = user!['id'];
+    final version = ++_goalsVersion;
+    _goalsTimer?.cancel();
+    if (goals != null && !_now().toUtc().isBefore(goals!.resetsAt)) {
+      goals = null;
+      _changed();
+    }
+    try {
+      final response = await _client
+          .get(_base.resolve('/api/daily-goals'))
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode != 200) {
+        throw StateError('Daily goals unavailable');
+      }
+      final next = DailyGoals.fromJson(
+        jsonDecode(response.body) as Map<String, dynamic>,
+      );
+      if (_disposed || version != _goalsVersion || user?['id'] != userId) {
+        return;
+      }
+      goals = next;
+      today = next.day;
+      goalsError = null;
+    } catch (_) {
+      if (_disposed || version != _goalsVersion || user?['id'] != userId) {
+        return;
+      }
+      goalsError = 'Denní pokrok se nepodařilo obnovit. Zkus to znovu.';
+    } finally {
+      if (!_disposed && version == _goalsVersion && user?['id'] == userId) {
+        var delay = const Duration(minutes: 1);
+        final untilReset = goals?.resetsAt.difference(_now().toUtc());
+        if (untilReset != null && untilReset < delay) {
+          delay = untilReset.isNegative
+              ? const Duration(seconds: 1)
+              : untilReset;
+        }
+        _goalsTimer = Timer(delay, () => unawaited(refreshGoals()));
+        _changed();
+      }
     }
   }
 
@@ -198,6 +284,7 @@ class ProgressController extends ChangeNotifier {
           .timeout(const Duration(seconds: 15));
       if (response.statusCode != 204) throw StateError('Logout failed');
       _retry?.cancel();
+      _clearGoals();
       user = null;
       _csrf = null;
       _pending.clear();
@@ -212,6 +299,7 @@ class ProgressController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _retry?.cancel();
+    _goalsTimer?.cancel();
     _client.close();
     super.dispose();
   }

@@ -23,7 +23,10 @@ class SchoolCatalog {
   ];
   List<VocabularyEntry> words(Map<String, dynamic> course) => [
     for (final item in course['items'] as List)
-      VocabularyEntry.fromJson(item['data'] as Map<String, dynamic>),
+      VocabularyEntry.fromJson(
+        item['data'] as Map<String, dynamic>,
+        id: item['id'] as String,
+      ),
   ];
 }
 
