@@ -189,7 +189,12 @@ class _EnglishPageState extends State<EnglishPage> {
 
   Future<void> _next() async {
     await _load();
-    if (mounted && _stage == _Stage.quiz) _answerFocus.requestFocus();
+    if (!mounted || _stage != _Stage.quiz) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _stage == _Stage.quiz && _correct == null && !_busy) {
+        _answerFocus.requestFocus();
+      }
+    });
   }
 
   @override

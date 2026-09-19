@@ -146,6 +146,8 @@ void main() {
       expect(find.text('Chyby: 1 · Úlohy navíc: 1'), findsOneWidget);
       expect(find.textContaining('Při vykání píšeme Sie vždy'), findsOneWidget);
       await tapText(tester, 'Pokračovat');
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+      expect(tester.testTextInput.setClientArgs!['readOnly'], isFalse);
       await tester.enterText(find.byType(TextField), 'Sie');
       await tapText(tester, 'Zkontrolovat');
       expect(find.text('Správně!'), findsOneWidget);
