@@ -36,3 +36,15 @@ void writePending(String userId, String value) {
 }
 
 void openLogin() => web.window.location.assign('/login');
+
+String? readPractice(String course) =>
+    web.window.localStorage.getItem('aaaskola.math.guest.$course');
+
+void writePractice(String course, String? value) {
+  final key = 'aaaskola.math.guest.$course';
+  if (value == null) {
+    web.window.localStorage.removeItem(key);
+  } else {
+    web.window.localStorage.setItem(key, value);
+  }
+}

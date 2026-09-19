@@ -44,6 +44,8 @@ class ProgressController extends ChangeNotifier {
     this.readPending = storage.readPending,
     this.writePending = storage.writePending,
     this.openLogin = storage.openLogin,
+    this.readPractice = storage.readPractice,
+    this.writePractice = storage.writePractice,
   }) : _client = client ?? http.Client(),
        _now = now ?? DateTime.now,
        _base = baseUrl ?? Uri.base;
@@ -55,9 +57,13 @@ class ProgressController extends ChangeNotifier {
   final String? Function(String) readPending;
   final void Function(String, String) writePending;
   final void Function() openLogin;
+  final String? Function(String) readPractice;
+  final void Function(String, String?) writePractice;
+  final Map<String, Map<String, dynamic>?> _guestMath = {};
   Map<String, dynamic>? user;
   String? _csrf;
   bool ready = false;
+  bool sessionResolved = false;
   bool loginAvailable = false;
   String? error;
   bool _saving = false;
@@ -82,6 +88,7 @@ class ProgressController extends ChangeNotifier {
     if (_saving || _loading || _disposed) return;
     if (!enabled) {
       ready = true;
+      sessionResolved = true;
       _changed();
       return;
     }
@@ -92,6 +99,7 @@ class ProgressController extends ChangeNotifier {
           .timeout(const Duration(seconds: 15));
       if (response.statusCode != 200) throw StateError('Session unavailable');
       final body = jsonDecode(response.body) as Map<String, dynamic>;
+      sessionResolved = true;
       final nextUser = body['user'] as Map<String, dynamic>?;
       if (nextUser?['id'] != user?['id']) _clearGoals();
       user = nextUser;
@@ -270,6 +278,45 @@ class ProgressController extends ChangeNotifier {
     return (body['days'] as List).cast<Map<String, dynamic>>();
   }
 
+  Map<String, dynamic>? guestMath(String course) {
+    if (!_guestMath.containsKey(course)) {
+      final saved = readPractice(course);
+      _guestMath[course] = saved == null
+          ? null
+          : jsonDecode(saved) as Map<String, dynamic>;
+    }
+    return _guestMath[course];
+  }
+
+  void saveGuestMath(String course, Map<String, dynamic>? exercise) {
+    writePractice(course, exercise == null ? null : jsonEncode(exercise));
+    _guestMath[course] = exercise;
+  }
+
+  Future<Map<String, dynamic>> mathRequest(
+    String action,
+    Map<String, dynamic> body,
+  ) async {
+    final owner = user?['id'];
+    if (owner == null) throw StateError('Sign in required');
+    final response = await _client
+        .post(
+          _base.resolve('/api/math/$action'),
+          headers: {'Content-Type': 'application/json', 'X-CSRF-Token': _csrf!},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (_disposed || user?['id'] != owner) throw StateError('Account changed');
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      await load();
+      throw StateError('Session expired');
+    }
+    if (response.statusCode == 409) throw const MathExerciseChanged();
+    if (response.statusCode != 200) throw StateError('Math request failed');
+    if (action == 'answer') unawaited(refreshGoals());
+    return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+  }
+
   Future<void> logout() async {
     if (_saving) {
       error = 'Probíhá ukládání. Za chvíli zkus odhlášení znovu.';
@@ -303,6 +350,10 @@ class ProgressController extends ChangeNotifier {
     _client.close();
     super.dispose();
   }
+}
+
+class MathExerciseChanged implements Exception {
+  const MathExerciseChanged();
 }
 
 class ProgressScope extends InheritedNotifier<ProgressController> {

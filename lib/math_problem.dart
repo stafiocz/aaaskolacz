@@ -27,6 +27,17 @@ class MathProblem {
   final String? verification;
   final MathProblem? nextStep;
   String get question => '$beforeAnswer ? $afterAnswer'.trim();
+
+  Map<String, dynamic> toJson() => {
+    'group': group,
+    'heading': heading,
+    'beforeAnswer': beforeAnswer,
+    'afterAnswer': afterAnswer,
+    'answer': answer,
+    'instruction': instruction,
+    'verification': verification,
+    'nextStep': nextStep?.toJson(),
+  };
 }
 
 class MixedPractice {

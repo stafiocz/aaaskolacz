@@ -108,11 +108,80 @@ class _PracticePageState extends State<PracticePage> {
   bool _solved = false;
   int _correctCount = 0;
   String _exerciseId = newExerciseId();
+  int _step = 0;
+  ProgressController? _progress;
+  String? _owner;
+  int _loadVersion = 0;
+  bool _loaded = false;
+  bool _busy = false;
+  String? _mathError;
+  Map<String, dynamic>? _answerRequest;
+  String get _course => '${widget.grade}.${widget.subject}';
 
   @override
-  void initState() {
-    super.initState();
-    _problem = _practice.next();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _progress = ProgressScope.of(context);
+    if (_progress != null && !_progress!.sessionResolved) return;
+    final owner = _progress?.user?['id'] as String? ?? 'guest';
+    if (_owner == owner) return;
+    _owner = owner;
+    _loaded = false;
+    _correctCount = 0;
+    _answerRequest = null;
+    _loadProblem();
+  }
+
+  Future<void> _loadProblem() async {
+    final version = ++_loadVersion;
+    final owner = _owner;
+    setState(() {
+      _busy = true;
+      _mathError = null;
+    });
+    try {
+      Map<String, dynamic>? saved;
+      if (owner != 'guest') {
+        saved = await _progress!.mathRequest('exercise', {
+          'grade': widget.grade,
+          'subject': widget.subject,
+        });
+      } else {
+        saved = _progress?.guestMath(_course);
+        if (saved == null) {
+          saved = {
+            'exerciseId': newExerciseId(),
+            'step': 0,
+            'problem': _practice.next().toJson(),
+          };
+          _progress?.saveGuestMath(_course, saved);
+        }
+      }
+      if (!mounted || version != _loadVersion || owner != _owner) return;
+      setState(() {
+        _problem = MathProblem.fromJson(
+          saved!['problem'] as Map<String, dynamic>,
+        );
+        _exerciseId = saved['exerciseId'] as String;
+        _step = saved['step'] as int;
+        _answer = '';
+        _incorrect = false;
+        _solved = false;
+        _answerRequest = null;
+        _loaded = true;
+      });
+    } catch (_) {
+      if (mounted && version == _loadVersion && owner == _owner) {
+        setState(
+          () => _mathError =
+              'Rozpracovaný příklad se nepodařilo načíst. Zkus to znovu.',
+        );
+      }
+    } finally {
+      if (mounted && version == _loadVersion && owner == _owner) {
+        setState(() => _busy = false);
+      }
+    }
   }
 
   @override
@@ -122,7 +191,7 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   void _digit(String digit) {
-    if (_solved) return;
+    if (!_loaded || _busy || _answerRequest != null || _solved) return;
     setState(() {
       if (_incorrect || _answer == '0') _answer = '';
       _incorrect = false;
@@ -131,7 +200,7 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   void _erase({bool all = false}) {
-    if (_solved) return;
+    if (!_loaded || _busy || _answerRequest != null || _solved) return;
     setState(() {
       _incorrect = false;
       _answer = all || _answer.isEmpty
@@ -140,28 +209,82 @@ class _PracticePageState extends State<PracticePage> {
     });
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (!_loaded || _busy) return;
     if (_solved) {
+      if (_owner != 'guest' || _problem.nextStep == null) {
+        await _loadProblem();
+        return;
+      }
       setState(() {
-        if (_problem.nextStep == null) _exerciseId = newExerciseId();
-        _problem = _problem.nextStep ?? _practice.next();
+        _problem = _problem.nextStep!;
+        _step++;
         _answer = '';
         _incorrect = false;
         _solved = false;
       });
     } else if (_answer.isNotEmpty) {
+      final owner = _owner;
+      final version = _loadVersion;
       setState(() {
-        _solved = int.parse(_answer) == _problem.answer;
-        _incorrect = !_solved;
-        if (_solved && _problem.nextStep == null) _correctCount++;
+        _busy = true;
+        _mathError = null;
       });
-      ProgressScope.of(context)?.record(
-        exerciseId: _exerciseId,
-        subject: widget.subject,
-        grade: widget.grade,
-        correct: _solved,
-        completed: _solved && _problem.nextStep == null,
-      );
+      try {
+        bool correct;
+        if (owner != 'guest') {
+          _answerRequest ??= {
+            'id': newExerciseId(),
+            'exerciseId': _exerciseId,
+            'step': _step,
+            'answer': int.parse(_answer),
+          };
+          final result = await _progress!.mathRequest(
+            'answer',
+            _answerRequest!,
+          );
+          correct = result['correct'] as bool;
+        } else {
+          correct = int.parse(_answer) == _problem.answer;
+          if (correct) {
+            _progress?.saveGuestMath(
+              _course,
+              _problem.nextStep == null
+                  ? null
+                  : {
+                      'exerciseId': _exerciseId,
+                      'step': _step + 1,
+                      'problem': _problem.nextStep!.toJson(),
+                    },
+            );
+          }
+        }
+        if (!mounted || version != _loadVersion || owner != _owner) return;
+        setState(() {
+          _answerRequest = null;
+          _solved = correct;
+          _incorrect = !correct;
+          if (_solved && _problem.nextStep == null) _correctCount++;
+        });
+      } on MathExerciseChanged {
+        if (!mounted || version != _loadVersion || owner != _owner) return;
+        setState(() {
+          _loaded = false;
+          _answerRequest = null;
+          _mathError =
+              'Příklad už pokročil v jiné kartě. Načti aktuální zadání.';
+        });
+      } catch (_) {
+        if (!mounted || version != _loadVersion || owner != _owner) return;
+        setState(
+          () => _mathError =
+              'Odpověď se nepodařilo ověřit. Zkus odeslání znovu; příklad zůstává uložený.',
+        );
+      } finally {
+        if (mounted && version == _loadVersion && owner == _owner) {
+          setState(() => _busy = false);
+        }
+      }
     }
   }
 
@@ -187,6 +310,44 @@ class _PracticePageState extends State<PracticePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (!_loaded) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(
+            '${widget.subjectName} · ${widget.gradeName ?? '${widget.grade}. třída'}',
+          ),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_busy || (_progress != null && !_progress!.ready))
+                  const CircularProgressIndicator()
+                else ...[
+                  Text(
+                    _mathError ?? 'Účet se nepodařilo načíst. Zkus to znovu.',
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      if (_progress != null && !_progress!.sessionResolved) {
+                        _progress!.load();
+                      } else {
+                        _loadProblem();
+                      }
+                    },
+                    child: const Text('Zkusit znovu'),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     final statusColor = _incorrect ? const Color(0xFFAD552B) : _green;
     final feedback = _solved
         ? 'Výborně! To je správně.'
@@ -217,6 +378,14 @@ class _PracticePageState extends State<PracticePage> {
                       children: [
                         const SaveStatus(),
                         const DailyGoalsCard(kind: 'math'),
+                        if (_mathError != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              _mathError!,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: TextButton.icon(
@@ -451,7 +620,10 @@ class _PracticePageState extends State<PracticePage> {
                                       child: _KeyButton(
                                         label: row[index],
                                         height: compact ? 50 : 62,
-                                        onPressed: _solved
+                                        onPressed:
+                                            _solved ||
+                                                _busy ||
+                                                _answerRequest != null
                                             ? null
                                             : () {
                                                 final key = row[index];
@@ -472,7 +644,7 @@ class _PracticePageState extends State<PracticePage> {
                         const SizedBox(height: 4),
                         FilledButton.icon(
                           key: const ValueKey('submit'),
-                          onPressed: _answer.isEmpty ? null : _submit,
+                          onPressed: _answer.isEmpty || _busy ? null : _submit,
                           icon: Icon(
                             _solved
                                 ? Icons.arrow_forward_rounded
@@ -480,7 +652,11 @@ class _PracticePageState extends State<PracticePage> {
                             size: 23,
                           ),
                           label: Text(
-                            !_solved
+                            _busy
+                                ? 'Ověřuji…'
+                                : _answerRequest != null
+                                ? 'Zkusit odeslat znovu'
+                                : !_solved
                                 ? 'Zkontrolovat'
                                 : _problem.nextStep != null
                                 ? 'Další krok'

@@ -11,6 +11,26 @@ Na úvodu je rozcestník **7. třída → Angličtina**, **5. třída → Matema
 a **3. třída → Matematika**.
 Z předmětu se lze vrátit na výběr předmětů a tříd.
 
+## Rozpracovaná matematika
+
+Odchod z předmětu nevylosuje nový příklad. Přihlášený účet má pro každou
+třídu a matematický předmět jedno rozpracované zadání uložené v databázi.
+Zůstává stejné po návratu, obnovení stránky, odhlášení i na jiném zařízení.
+Nové zadání dostane žák až po správném dokončení celého příkladu; řetězec
+pokračuje od prvního nedokončeného kroku. Půlnoc rozpracovaný příklad nemění.
+
+Server vybírá vyvážený mix skupin a postupně prochází jejich zadání.
+`POST /api/math/exercise` vrací stávající příklad nebo přidělí další po dokončení.
+`POST /api/math/answer` ověří číselnou odpověď a atomicky uloží výsledek i krok.
+Opakované odeslání stejné odpovědi se stejným ID se nezapočítá dvakrát;
+zastaralý krok z jiné karty se odmítne. Úprava obsahu v databázi nepřepíše
+již rozpracované zadání. Migrace zachovává dosavadní historii.
+
+Přihlášené počítání vyžaduje spojení se serverem. Při výpadku se příklad
+nevymění a odpověď lze odeslat znovu. Hostovi se zadání a rozpracovaný krok
+uchovají v úložišti daného prohlížeče, bez započítání do účtu. Smazání tohoto
+úložiště může vymazat postup hosta; postup přihlášeného účtu zůstává v databázi.
+
 ## 3. třída — Matematika
 
 Procvičování automaticky míchá všechny typy příkladů:
@@ -91,7 +111,8 @@ uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
   Dnes zvládnutá slovíčka se při výběru dalšího kola vynechají, dokud zbývají jiná.
 
 Procvičování funguje i bez účtu. Na webu lze přes Google ukládat výsledky;
-nabídka a obsah se načítají z databáze, míchání a kontrola odpovědí běží lokálně.
+Nabídka a obsah se načítají z databáze. Angličtina a počítání hosta se
+vyhodnocují lokálně, přihlášenou matematiku přiděluje a ověřuje server.
 Při otevření aplikace je potřeba připojení k internetu.
 
 ## Obsah v databázi
@@ -152,10 +173,11 @@ Přehled pro každý den zvoleného měsíce odděluje třídy a předměty:
 výsledky každého dítěte použijte jeho vlastní účet. API ověřuje Google ID token,
 nonce, původ požadavku, serverovou session a CSRF token. Session trvá 30 dní,
 cookie je HttpOnly/Secure/SameSite=Lax a v databázi je jen hash session tokenu.
-Ukládá se jméno, e-mail a výsledky; neukládá se Google token ani zadaný text odpovědi.
-API vyhodnocení odpovědi přebírá od aplikace; nejde o zabezpečený školní test.
+Ukládá se jméno, e-mail, výsledky a číselné odpovědi přihlášené matematiky;
+neukládá se Google token ani zadaný text u slovíček. Vyhodnocení slovíček
+a starších verzí aplikace API přebírá od klienta; nejde o zabezpečený školní test.
 
-Čekající odpovědi se uloží do prohlížeče pod ID účtu a při výpadku se opakují
+Čekající odpovědi slovíček a starších verzí se uloží do prohlížeče pod ID účtu a při výpadku se opakují
 se stejným ID bez dvojího započítání. Po opětovném přihlášení stejným účtem se
 odešlou i po obnovení stránky. Jinému účtu se nepřiřadí. Čas odpovědi vychází
 z hodin zařízení; nesmí být více než pět minut v budoucnosti. Smazání dat

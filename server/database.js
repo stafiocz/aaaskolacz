@@ -21,6 +21,10 @@ export async function migrate(pool) {
         INSERT INTO content_migrations(version) VALUES ('catalog-v1')`);
     }
     await client.query('ALTER TABLE exercises ADD COLUMN IF NOT EXISTS practice_item_id text');
+    await client.query(`ALTER TABLE exercises ADD COLUMN IF NOT EXISTS math_problem jsonb;
+      ALTER TABLE exercises ADD COLUMN IF NOT EXISTS math_step integer NOT NULL DEFAULT 0;
+      ALTER TABLE attempts ADD COLUMN IF NOT EXISTS math_answer integer;
+      ALTER TABLE attempts ADD COLUMN IF NOT EXISTS math_step integer`);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -60,7 +64,7 @@ export async function saveAttempt(pool, userId, attempt) {
       'SELECT * FROM exercises WHERE user_id = $1 AND id = $2 FOR UPDATE', [userId, exerciseId]);
     const { rows: [existing] } = await client.query(
       'SELECT * FROM attempts WHERE user_id = $1 AND id = $2', [userId, id]);
-    if (exercise.subject !== subject || exercise.grade !== grade || exercise.practice_item_id !== itemId ||
+    if (exercise.math_problem || exercise.subject !== subject || exercise.grade !== grade || exercise.practice_item_id !== itemId ||
         (existing && (existing.exercise_id !== exerciseId || existing.correct !== correct || existing.completed !== completed ||
           existing.answered_at.getTime() !== Date.parse(occurredAt))) ||
         (!existing && exercise.completed)) {

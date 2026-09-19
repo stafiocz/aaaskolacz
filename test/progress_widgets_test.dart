@@ -2,8 +2,10 @@ import 'catalog_fixture.dart';
 import 'daily_goals_fixture.dart';
 import 'dart:convert';
 import 'package:aaaskola/english_page.dart';
-import '../tool/math_seed.dart';
+import '../tool/math_seed.dart' show grade5Modes;
 import 'package:aaaskola/progress.dart';
+import 'package:aaaskola/math_problem.dart';
+import 'package:aaaskola/catalog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -17,12 +19,62 @@ void main() {
   final attempts = <Map<String, dynamic>>[];
   setUp(() {
     attempts.clear();
+    final catalog = SchoolCatalog.fromJson(seedJson());
+    final practice = MixedPractice(
+      problems: catalog.problems(
+        catalog.courses.firstWhere(
+          (c) => c['grade'] == 5 && c['subject'] == 'math',
+        ),
+      ),
+    );
+    MathProblem? problem;
+    String? exerciseId;
+    var step = 0;
     progress = ProgressController(
       enabled: true,
       baseUrl: Uri.parse('https://aaaskola.cz'),
       readPending: (_) => null,
       writePending: (_, _) {},
       client: MockClient((request) async {
+        if (request.url.path == '/api/math/exercise') {
+          if (problem == null) {
+            problem = practice.next();
+            exerciseId = newExerciseId();
+            step = 0;
+          }
+          return http.Response(
+            jsonEncode({
+              'exerciseId': exerciseId,
+              'step': step,
+              'problem': problem!.toJson(),
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.url.path == '/api/math/answer') {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body.containsKey('correct'), false);
+          expect(body['step'], step);
+          final correct = body['answer'] == problem!.answer;
+          final completed = correct && problem!.nextStep == null;
+          attempts.add({
+            ...body,
+            'subject': 'math',
+            'grade': 5,
+            'correct': correct,
+            'completed': completed,
+          });
+          if (correct) {
+            problem = problem!.nextStep;
+            step++;
+          }
+          return http.Response(
+            jsonEncode({'correct': correct, 'completed': completed}),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
         if (request.url.path == '/api/daily-goals') {
           return http.Response(jsonEncode(goalsData()), 200);
         }
