@@ -1,0 +1,978 @@
+{
+  "subjects": [
+    {
+      "id": "german",
+      "slug": "nemcina",
+      "name": "Němčina",
+      "kind": "vocabulary",
+      "answerLanguage": "německy"
+    }
+  ],
+  "courses": [
+    {
+      "grade": 7,
+      "subject": "german",
+      "description": "Mix slovíček, členů, zájmen a časování haben a kochen.",
+      "sourceTitle": "Sešit · jídlo a pití, zájmena, haben a kochen",
+      "sortOrder": 3,
+      "items": [
+        {
+          "id": "7-german-word-bier",
+          "data": {
+            "english": "das Bier",
+            "czech": "pivo",
+            "topic": "Jídlo a pití",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Bier je středního rodu: das Bier. Spojení ie se vyslovuje jako dlouhé í.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-bier",
+          "data": {
+            "english": "das",
+            "czech": "___ Bier (pivo, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Bier je středního rodu: das Bier. Spojení ie se vyslovuje jako dlouhé í.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-wein",
+          "data": {
+            "english": "der Wein",
+            "czech": "víno",
+            "topic": "Jídlo a pití",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Wein je mužského rodu: der Wein. Spojení ei se vyslovuje přibližně aj.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-wein",
+          "data": {
+            "english": "der",
+            "czech": "___ Wein (víno, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Wein je mužského rodu: der Wein. Spojení ei se vyslovuje přibližně aj.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-ei",
+          "data": {
+            "english": "das Ei",
+            "czech": "vajíčko",
+            "topic": "Jídlo a pití",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Ei je středního rodu: das Ei. Nezaměňuj Ei (vajíčko) a Eis (zmrzlina).",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-ei",
+          "data": {
+            "english": "das",
+            "czech": "___ Ei (vajíčko, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Ei je středního rodu: das Ei. Nezaměňuj Ei (vajíčko) a Eis (zmrzlina).",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-eis",
+          "data": {
+            "english": "das Eis",
+            "czech": "zmrzlina",
+            "topic": "Jídlo a pití",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Eis je středního rodu: das Eis. Spojení ei se vyslovuje přibližně aj.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-eis",
+          "data": {
+            "english": "das",
+            "czech": "___ Eis (zmrzlina, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Eis je středního rodu: das Eis. Spojení ei se vyslovuje přibližně aj.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-saft",
+          "data": {
+            "english": "der Saft",
+            "czech": "džus / šťáva",
+            "topic": "Jídlo a pití",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Saft je mužského rodu: der Saft.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-saft",
+          "data": {
+            "english": "der",
+            "czech": "___ Saft (džus / šťáva, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Saft je mužského rodu: der Saft.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-apfel",
+          "data": {
+            "english": "der Apfel",
+            "czech": "jablko",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Apfel je mužského rodu: der Apfel. Podstatné jméno píšeme s velkým A.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-apfel",
+          "data": {
+            "english": "der",
+            "czech": "___ Apfel (jablko, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Apfel je mužského rodu: der Apfel. Podstatné jméno píšeme s velkým A.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-banane",
+          "data": {
+            "english": "die Banane",
+            "czech": "banán",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Banane je ženského rodu: die Banane.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-banane",
+          "data": {
+            "english": "die",
+            "czech": "___ Banane (banán, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Banane je ženského rodu: die Banane.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-erdbeere",
+          "data": {
+            "english": "die Erdbeere",
+            "czech": "jahoda",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Erdbeere je ženského rodu: die Erdbeere. Pozor na dvojité ee.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-erdbeere",
+          "data": {
+            "english": "die",
+            "czech": "___ Erdbeere (jahoda, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Erdbeere je ženského rodu: die Erdbeere. Pozor na dvojité ee.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-birne",
+          "data": {
+            "english": "die Birne",
+            "czech": "hruška",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Birne je ženského rodu: die Birne.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-birne",
+          "data": {
+            "english": "die",
+            "czech": "___ Birne (hruška, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Birne je ženského rodu: die Birne.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-gurke",
+          "data": {
+            "english": "die Gurke",
+            "czech": "okurka",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Gurke je ženského rodu: die Gurke.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-gurke",
+          "data": {
+            "english": "die",
+            "czech": "___ Gurke (okurka, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Gurke je ženského rodu: die Gurke.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-moehre",
+          "data": {
+            "english": "die Möhre",
+            "czech": "mrkev",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Möhre je ženského rodu. Píšeme přehlásku ö: die Möhre.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-moehre",
+          "data": {
+            "english": "die",
+            "czech": "___ Möhre (mrkev, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Möhre je ženského rodu. Píšeme přehlásku ö: die Möhre.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-tomate",
+          "data": {
+            "english": "die Tomate",
+            "czech": "rajče",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Tomate je ženského rodu: die Tomate. Německý rod se nemusí shodovat s českým.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-tomate",
+          "data": {
+            "english": "die",
+            "czech": "___ Tomate (rajče, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Tomate je ženského rodu: die Tomate. Německý rod se nemusí shodovat s českým.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-paprika",
+          "data": {
+            "english": "die Paprika",
+            "czech": "paprika (zelenina)",
+            "topic": "Ovoce a zelenina",
+            "page": 0,
+            "alternatives": [
+              "der Paprika"
+            ],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "U zeleniny se používá die Paprika i der Paprika. Obě varianty uznáváme.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-paprika",
+          "data": {
+            "english": "die",
+            "czech": "___ Paprika (paprika (zelenina), 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [
+              "der"
+            ],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "U zeleniny se používá die Paprika i der Paprika. Obě varianty uznáváme.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-suppe",
+          "data": {
+            "english": "die Suppe",
+            "czech": "polévka",
+            "topic": "Jídlo a pití",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy včetně určitého členu v 1. pádě. Člen piš malým písmenem.",
+            "explanation": "Suppe je ženského rodu: die Suppe. Píšeme dvě p.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-article-suppe",
+          "data": {
+            "english": "die",
+            "czech": "___ Suppe (polévka, 1. pád)",
+            "topic": "Členy der / die / das",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze určitý člen v 1. pádě. Piš malým písmenem.",
+            "explanation": "Suppe je ženského rodu: die Suppe. Píšeme dvě p.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-suess",
+          "data": {
+            "english": "süß",
+            "czech": "sladký",
+            "topic": "Vlastnosti a slovesa",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy. Použij základní tvar a malé písmeno.",
+            "explanation": "Ve slově süß píšeme přehlásku ü a ostré s: ß.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-lecker",
+          "data": {
+            "english": "lecker",
+            "czech": "chutný / lahodný",
+            "topic": "Vlastnosti a slovesa",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy. Použij základní tvar a malé písmeno.",
+            "explanation": "Lecker znamená chutný nebo lahodný, například o jídle.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-gut",
+          "data": {
+            "english": "gut",
+            "czech": "dobrý",
+            "topic": "Vlastnosti a slovesa",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy. Použij základní tvar a malé písmeno.",
+            "explanation": "Gut znamená dobrý; v některých spojeních také dobře.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-super",
+          "data": {
+            "english": "super",
+            "czech": "super / skvělý",
+            "topic": "Vlastnosti a slovesa",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy. Použij základní tvar a malé písmeno.",
+            "explanation": "Super znamená super nebo skvělý. Úvodní s se zde vyslovuje jako z.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-haben",
+          "data": {
+            "english": "haben",
+            "czech": "mít",
+            "topic": "Vlastnosti a slovesa",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy. Použij základní tvar a malé písmeno.",
+            "explanation": "Haben znamená mít. Časování: ich habe, du hast, er/sie/es hat, wir haben, ihr habt, sie/Sie haben.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-kochen",
+          "data": {
+            "english": "kochen",
+            "czech": "vařit",
+            "topic": "Vlastnosti a slovesa",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy. Použij základní tvar a malé písmeno.",
+            "explanation": "Kochen znamená vařit. Časování: ich koche, du kochst, er/sie/es kocht, wir kochen, ihr kocht, sie/Sie kochen.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-word-schmecken",
+          "data": {
+            "english": "schmecken",
+            "czech": "chutnat",
+            "topic": "Vlastnosti a slovesa",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "vocabulary",
+            "instruction": "Napiš německy. Použij základní tvar a malé písmeno.",
+            "explanation": "Schmecken znamená chutnat. Počáteční sch vyslovujeme jako š.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-ich",
+          "data": {
+            "english": "ich",
+            "czech": "já",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno ich znamená já. Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-ich",
+          "data": {
+            "english": "habe",
+            "czech": "ich ___ (haben; já)",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je ich habe. Zájmeno ich znamená já. Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-ich",
+          "data": {
+            "english": "koche",
+            "czech": "ich ___ (kochen; já)",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je ich koche. Ke kmeni koch- přidáme koncovku -e.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-du",
+          "data": {
+            "english": "du",
+            "czech": "ty",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno du znamená ty. Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-du",
+          "data": {
+            "english": "hast",
+            "czech": "du ___ (haben; ty)",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je du hast. Haben je nepravidelné: u du je tvar hast.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-du",
+          "data": {
+            "english": "kochst",
+            "czech": "du ___ (kochen; ty)",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je du kochst. Ke kmeni koch- přidáme koncovku -st.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-er",
+          "data": {
+            "english": "er",
+            "czech": "on",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno er znamená on. Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-er",
+          "data": {
+            "english": "hat",
+            "czech": "er ___ (haben; on)",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je er hat. Ve 3. osobě jednotného čísla má haben tvar hat.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-er",
+          "data": {
+            "english": "kocht",
+            "czech": "er ___ (kochen; on)",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je er kocht. Ke kmeni koch- přidáme koncovku -t.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-sie-singular",
+          "data": {
+            "english": "sie",
+            "czech": "ona (jednotné číslo)",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno sie zde znamená ona (jednotné číslo). Mimo začátek věty se píše s malým s.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-sie-singular",
+          "data": {
+            "english": "hat",
+            "czech": "sie ___ (haben; ona (jednotné číslo))",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je sie hat. Ve 3. osobě jednotného čísla má haben tvar hat.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-sie-singular",
+          "data": {
+            "english": "kocht",
+            "czech": "sie ___ (kochen; ona (jednotné číslo))",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je sie kocht. Ke kmeni koch- přidáme koncovku -t.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-es",
+          "data": {
+            "english": "es",
+            "czech": "ono",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno es znamená ono. Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-es",
+          "data": {
+            "english": "hat",
+            "czech": "es ___ (haben; ono)",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je es hat. Ve 3. osobě jednotného čísla má haben tvar hat.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-es",
+          "data": {
+            "english": "kocht",
+            "czech": "es ___ (kochen; ono)",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je es kocht. Ke kmeni koch- přidáme koncovku -t.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-wir",
+          "data": {
+            "english": "wir",
+            "czech": "my",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno wir znamená my. Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-wir",
+          "data": {
+            "english": "haben",
+            "czech": "wir ___ (haben; my)",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je wir haben. Zájmeno wir znamená my. Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-wir",
+          "data": {
+            "english": "kochen",
+            "czech": "wir ___ (kochen; my)",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je wir kochen. Ke kmeni koch- přidáme koncovku -en.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-ihr",
+          "data": {
+            "english": "ihr",
+            "czech": "vy (více lidí, tykání)",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno ihr znamená vy (více lidí, tykání). Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-ihr",
+          "data": {
+            "english": "habt",
+            "czech": "ihr ___ (haben; vy (více lidí, tykání))",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je ihr habt. Zájmeno ihr znamená vy (více lidí, tykání). Mimo začátek věty se píše s malým písmenem.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-ihr",
+          "data": {
+            "english": "kocht",
+            "czech": "ihr ___ (kochen; vy (více lidí, tykání))",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je ihr kocht. Ke kmeni koch- přidáme koncovku -t.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-sie-plural",
+          "data": {
+            "english": "sie",
+            "czech": "oni / ony / ona (množné číslo)",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Zájmeno sie zde znamená oni / ony / ona (množné číslo). Mimo začátek věty se píše s malým s.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-sie-plural",
+          "data": {
+            "english": "haben",
+            "czech": "sie ___ (haben; oni / ony / ona (množné číslo))",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je sie haben. Zájmeno sie zde znamená oni / ony / ona (množné číslo). Mimo začátek věty se píše s malým s.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-sie-plural",
+          "data": {
+            "english": "kochen",
+            "czech": "sie ___ (kochen; oni / ony / ona (množné číslo))",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je sie kochen. Ke kmeni koch- přidáme koncovku -en.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-pronoun-sie-formal",
+          "data": {
+            "english": "Sie",
+            "czech": "Vy (zdvořilé vykání)",
+            "topic": "Osobní zájmena",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Napiš samotné německé zájmeno, jako uvnitř věty. Rozlišuj sie a Sie.",
+            "explanation": "Při vykání píšeme Sie vždy s velkým S a sloveso jako u 3. osoby množného čísla.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-haben-sie-formal",
+          "data": {
+            "english": "haben",
+            "czech": "Sie ___ (haben; Vy (zdvořilé vykání))",
+            "topic": "Časování haben",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+            "explanation": "Správně je Sie haben. Při vykání píšeme Sie vždy s velkým S a sloveso jako u 3. osoby množného čísla.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-kochen-sie-formal",
+          "data": {
+            "english": "kochen",
+            "czech": "Sie ___ (kochen; Vy (zdvořilé vykání))",
+            "topic": "Časování kochen",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Doplň pouze správný tvar slovesa kochen v přítomném čase.",
+            "explanation": "Správně je Sie kochen. Ke kmeni koch- přidáme koncovku -en. Při vykání píšeme Sie vždy s velkým S a sloveso jako u 3. osoby množného čísla.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-sentence-ich-bier",
+          "data": {
+            "english": "Ich habe das Bier.",
+            "czech": "Já mám to pivo.",
+            "topic": "Věty s haben a 4. pádem",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Přelož celou větu do němčiny. Použij osobní zájmeno a určitý člen.",
+            "explanation": "Ich má tvar habe. Po haben je zde 4. pád. Střední rod zachovává člen das: das Bier.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-sentence-du-wein",
+          "data": {
+            "english": "Du hast den Wein.",
+            "czech": "Ty máš to víno.",
+            "topic": "Věty s haben a 4. pádem",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Přelož celou větu do němčiny. Použij osobní zájmeno a určitý člen.",
+            "explanation": "Du má tvar hast. Wein je mužského rodu, proto se po haben ve 4. pádě mění der na den: den Wein.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-sentence-sie-saft",
+          "data": {
+            "english": "Sie hat den Saft.",
+            "czech": "Ona má ten džus.",
+            "topic": "Věty s haben a 4. pádem",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Přelož celou větu do němčiny. Použij osobní zájmeno a určitý člen.",
+            "explanation": "Ona = sie, ve větě na začátku Sie. Ve 3. osobě jednotného čísla je hat. Mužský rod ve 4. pádě: den Saft.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-sentence-wir-apfel",
+          "data": {
+            "english": "Wir haben den Apfel.",
+            "czech": "My máme to jablko.",
+            "topic": "Věty s haben a 4. pádem",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Přelož celou větu do němčiny. Použij osobní zájmeno a určitý člen.",
+            "explanation": "Wir má tvar haben. Apfel je mužského rodu, ve 4. pádě proto den Apfel.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-sentence-ihr-erdbeere",
+          "data": {
+            "english": "Ihr habt die Erdbeere.",
+            "czech": "Vy (tykání více lidem) máte tu jahodu.",
+            "topic": "Věty s haben a 4. pádem",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Přelož celou větu do němčiny. Použij osobní zájmeno a určitý člen.",
+            "explanation": "Ihr má tvar habt. Ženský rod zachovává ve 4. pádě člen die: die Erdbeere.",
+            "caseSensitive": true
+          }
+        },
+        {
+          "id": "7-german-sentence-sie-banane",
+          "data": {
+            "english": "Sie haben die Banane.",
+            "czech": "Oni mají ten banán.",
+            "topic": "Věty s haben a 4. pádem",
+            "page": 0,
+            "alternatives": [],
+            "exerciseType": "grammar",
+            "instruction": "Přelož celou větu do němčiny. Použij osobní zájmeno a určitý člen.",
+            "explanation": "Oni = sie a sloveso haben. Na začátku věty píšeme Sie. Banane je ženského rodu: ve 4. pádě die Banane.",
+            "caseSensitive": true
+          }
+        }
+      ]
+    }
+  ]
+}

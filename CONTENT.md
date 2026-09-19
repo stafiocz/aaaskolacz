@@ -86,6 +86,43 @@ jiný jazyk. `answerLanguage` tvoří pokyn „Napiš německy“. `alternatives
 uznávané odpovědi. `page` označuje stránku zdroje; pro vlastní obsah může být 0.
 Adresa kurzu se sestaví jako `/#/4-trida/nemcina`.
 
+### Mix slovíček a gramatiky
+
+Typ předmětu zůstává `vocabulary`. Jazyková položka může obsahovat:
+
+- `exerciseType`: `vocabulary` (výchozí překlad) nebo `grammar`.
+- `instruction`: konkrétní pokyn k odpovědi, nejvýše 1 000 znaků.
+- `explanation`: vysvětlení zobrazené po odpovědi nebo odhalení kartičky,
+  nejvýše 1 000 znaků. Gramatická úloha vyžaduje pokyn i vysvětlení.
+- `caseSensitive`: boolean, výchozí `false`. Pro němčinu používáme `true`,
+  aby se kontrolovala velká písmena u podstatných jmen a rozdíl sie/Sie.
+
+Příklad gramatické položky pro kurz 7. třída / `german`:
+
+```json
+{
+  "id": "7-german-haben-du",
+  "data": {
+    "english": "hast",
+    "czech": "du ___ (haben; ty)",
+    "topic": "Časování haben",
+    "page": 0,
+    "alternatives": [],
+    "exerciseType": "grammar",
+    "instruction": "Doplň pouze správný tvar slovesa haben v přítomném čase.",
+    "explanation": "Správně je du hast. Haben je nepravidelné sloveso.",
+    "caseSensitive": true
+  }
+}
+```
+
+`czech` je český překlad nebo zadání včetně mezery. `english` obsahuje správnou
+odpověď v cílovém jazyce, u doplňování pouze chybějící část. Při překladu celých
+vět pokyn výslovně uvádí, že se má napsat celá věta. `page: 0` označuje vlastní
+poznámky bez čísla stránky. Smíšené kolo vyvažuje oba typy; chyby přidávají
+další úlohy a opravy. Gramatika se ukládá do historie, ale neplní denní cíl
+15 slovíček. Změna typu již přiděleného zadání nemění jeho denní započítání.
+
 ## Úpravy a skrytí
 
 - ID zadání je jedinečné v celé databázi. Stejné ID aktualizuje zadání; nelze ho

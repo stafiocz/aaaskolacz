@@ -158,7 +158,7 @@ test('catalog migration preserves legacy accounts, sessions and results and neve
     await isolated.query("UPDATE practice_items SET active=false WHERE id='7-czech-videly'");
     await migrate(isolated);
     assert.equal((await isolated.query("SELECT active FROM practice_items WHERE id='7-czech-videly'")).rows[0].active, false);
-    assert.equal((await isolated.query('SELECT count(*)::int n FROM practice_items')).rows[0].n, 1311);
+    assert.equal((await isolated.query('SELECT count(*)::int n FROM practice_items')).rows[0].n, 1379);
   } finally {
     await isolated.end();
     await pool.query(`DROP SCHEMA ${schema} CASCADE`);
@@ -266,7 +266,7 @@ test('database-only changes appear in catalog immediately and new courses record
     return response.json();
   };
   const initial = await catalog();
-  assert.equal(initial.courses.reduce((n, c) => n + c.items.length, 0), 1311);
+  assert.equal(initial.courses.reduce((n, c) => n + c.items.length, 0), 1379);
   try {
     await importTransaction(newContent());
     const updated = await catalog();
@@ -287,7 +287,7 @@ test('database-only changes appear in catalog immediately and new courses record
     assert.equal((await stats(session))[0].completed, 1);
   } finally {
     await pool.query('TRUNCATE users CASCADE');
-    await pool.query("DELETE FROM practice_items WHERE subject='german'; DELETE FROM school_courses WHERE subject='german'; DELETE FROM school_subjects WHERE id='german'; DELETE FROM school_grades WHERE id=4");
+    await pool.query("DELETE FROM practice_items WHERE subject='german' AND grade=4; DELETE FROM school_courses WHERE subject='german' AND grade=4; DELETE FROM school_grades WHERE id=4");
   }
 });
 
@@ -599,4 +599,93 @@ test('pre-round unfinished chain keeps its snapshot and current step during migr
   assert.deepEqual(task.problem, item.data.nextStep);
   assert.equal(task.progress.total, 15);
   assert.equal((await solveMath(session, task)).completed, true);
+});
+
+test('German mixes both exercise types, persists retries and counts only translations as daily words', async () => {
+  let session = await signIn();
+  const start = async () => {
+    const response = await post('/api/vocabulary/exercise', session, { grade: 7, subject: 'german', newRound: true });
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  const answer = async (task, value, id = randomUUID()) => {
+    const response = await post('/api/vocabulary/answer', session, {
+      id, exerciseId: task.exerciseId, step: 0, revision: task.revision, answer: value,
+    });
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  const first = await start();
+  const grammarCount = first.cards.filter(card => card.data.exerciseType === 'grammar').length;
+  assert.ok(grammarCount === 7 || grammarCount === 8);
+  assert.equal(new Set(first.cards.map(card => card.id)).size, 15);
+  const errorId = randomUUID();
+  const error = await answer(first, '', errorId);
+  assert.equal(error.progress.total, 16);
+  assert.deepEqual(await answer(first, '', errorId), error);
+  const next = await start();
+  session = await signIn();
+  await migrate(pool);
+  assert.deepEqual(await start(), next);
+  const learned = new Set();
+  const solve = async task => {
+    const result = await answer(task, task.problem.english);
+    assert.equal(result.correct, true);
+    if (task.problem.exerciseType !== 'grammar') learned.add(task.itemId);
+  };
+  for (let i = 0; i < 3; i++) await solve(await start());
+  const retry = await start();
+  assert.equal(retry.exerciseId, first.exerciseId);
+  assert.equal(retry.revision, 1);
+  assert.deepEqual(retry.problem, first.problem);
+  await solve(retry);
+  let current = await start();
+  while (current.progress.completed < 15) { await solve(current); current = await start(); }
+  const finalResult = await answer(current, current.problem.english);
+  if (current.problem.exerciseType !== 'grammar') learned.add(current.itemId);
+  assert.equal(finalResult.progress.finished, true);
+  assert.equal(finalResult.progress.completed, 16);
+  const goals = await dailyGoals(pool, session.user.id);
+  assert.equal(goals.vocabulary, learned.size);
+  assert.deepEqual(new Set(goals.wordIds), learned);
+  assert.equal(goals.math, 0);
+  const day = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
+  const [row] = await stats(session, day, day);
+  assert.equal(row.subject, 'german');
+  assert.equal(row.correct, 16);
+  assert.equal(row.incorrect, 1);
+  assert.equal(row.completed, 16);
+});
+
+test('German server rejects lowercase formal Sie and nouns and preserves content edits on migration', async () => {
+  const { rows: original } = await pool.query("SELECT id,data,active FROM practice_items WHERE grade=7 AND subject='german'");
+  try {
+    for (const [identity, itemId, wrong] of [
+      ['alice', '7-german-pronoun-sie-formal', 'sie'], ['bob', '7-german-word-apfel', 'der apfel'],
+    ]) {
+      await pool.query("UPDATE practice_items SET active=(id=$1) WHERE grade=7 AND subject='german'", [itemId]);
+      const session = await signIn(identity);
+      const start = async () => (await post('/api/vocabulary/exercise', session, { grade: 7, subject: 'german' })).json();
+      const task = await start();
+      assert.equal(task.itemId, itemId);
+      const answer = async (entry, value) => (await post('/api/vocabulary/answer', session, {
+        id: randomUUID(), exerciseId: entry.exerciseId, step: 0, revision: entry.revision, answer: value,
+      })).json();
+      const result = await answer(task, wrong);
+      assert.equal(result.correct, false);
+      assert.equal(result.progress.total, 2);
+      const extra = await start();
+      assert.notEqual(extra.exerciseId, task.exerciseId);
+      assert.equal((await answer(extra, `  ${extra.problem.english}! `)).correct, true);
+      const repeated = await start();
+      assert.equal(repeated.exerciseId, task.exerciseId);
+      assert.equal((await answer(repeated, repeated.problem.english)).progress.finished, true);
+      assert.equal((await dailyGoals(pool, session.user.id)).vocabulary, identity === 'bob' ? 1 : 0);
+    }
+    await pool.query("UPDATE practice_items SET data=jsonb_set(data,'{explanation}','\"Edited explanation\"') WHERE id='7-german-word-apfel'");
+    await migrate(pool);
+    assert.equal((await pool.query("SELECT data->>'explanation' AS explanation FROM practice_items WHERE id='7-german-word-apfel'")).rows[0].explanation, 'Edited explanation');
+  } finally {
+    for (const item of original) await pool.query('UPDATE practice_items SET data=$2,active=$3 WHERE id=$1', [item.id, item.data, item.active]);
+  }
 });

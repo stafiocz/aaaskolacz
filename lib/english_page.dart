@@ -58,6 +58,8 @@ class _EnglishPageState extends State<EnglishPage> {
   List<VocabularyEntry> _round = [];
   int _card = 0;
   bool _revealed = false;
+  bool get _mixed => widget.entries.any((entry) => entry.isGrammar);
+  String get _extraLabel => _mixed ? 'Úlohy navíc' : 'Slovíčka navíc';
 
   @override
   void dispose() {
@@ -86,16 +88,7 @@ class _EnglishPageState extends State<EnglishPage> {
       subject: widget.subject,
       items: [
         for (final word in widget.entries)
-          {
-            'id': word.id ?? word.english,
-            'data': {
-              'english': word.english,
-              'czech': word.czech,
-              'topic': word.topic,
-              'page': word.page,
-              'alternatives': word.alternatives,
-            },
-          },
+          {'id': word.id ?? word.english, 'data': word.toJson()},
       ],
     );
   }
@@ -230,24 +223,26 @@ class _EnglishPageState extends State<EnglishPage> {
   );
 
   List<Widget> _intro() => [
-    const Text(
-      'Slovíčka po malých krocích',
-      style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+    Text(
+      _mixed ? 'Slovíčka a gramatika' : 'Slovíčka po malých krocích',
+      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
     ),
     const SizedBox(height: 10),
     Text(
-      '${widget.sourceTitle}\n${widget.entries.length} slovíček a frází z tvých podkladů.',
+      '${widget.sourceTitle}\n${widget.entries.length} ${_mixed ? 'úloh na slovíčka a gramatiku' : 'slovíček a frází'} z tvých podkladů.',
       style: const TextStyle(color: Color(0xFF6E8177), height: 1.6),
     ),
     const SizedBox(height: 24),
     _panel([
-      const Text(
-        'Denní úkol: 15 slovíček',
-        style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+      Text(
+        _mixed ? 'Smíšený test: 15 úloh' : 'Denní úkol: 15 slovíček',
+        style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
       ),
       const SizedBox(height: 16),
       Text(
-        '1. Projdi kartičky a zkus si vybavit překlad.\n\n2. Napiš ${widget.answerLanguage} české slovíčko nebo frázi.\n\n3. Chybné slovíčko se vrátí po třech dalších zadáních. Každá chyba přidá jedno další slovíčko.',
+        _mixed
+            ? '1. Projdi kartičky se slovíčky a pravidly.\n\n2. V jednom testu překládej slovíčka, doplňuj členy a časuj slovesa.\n\n3. Chybná úloha se vrátí po několika dalších zadáních. Každá chyba přidá jednu další úlohu.'
+            : '1. Projdi kartičky a zkus si vybavit překlad.\n\n2. Napiš ${widget.answerLanguage} české slovíčko nebo frázi.\n\n3. Chybné slovíčko se vrátí po třech dalších zadáních. Každá chyba přidá jedno další slovíčko.',
         style: TextStyle(fontSize: 16, height: 1.5),
       ),
     ]),
@@ -255,7 +250,7 @@ class _EnglishPageState extends State<EnglishPage> {
     FilledButton.icon(
       onPressed: _busy || _owner == null ? null : () => _start(),
       icon: const Icon(Icons.style_outlined),
-      label: const Text('Učit se slovíčka'),
+      label: Text(_mixed ? 'Učit se s kartičkami' : 'Učit se slovíčka'),
     ),
     const SizedBox(height: 10),
     OutlinedButton(
@@ -263,9 +258,11 @@ class _EnglishPageState extends State<EnglishPage> {
       child: const Text('Rovnou se vyzkoušet'),
     ),
     const SizedBox(height: 18),
-    const Text(
-      'V kole je až 15 slovíček. Témata se míchají. Po přihlášení se dnešní zvládnutá slovíčka ukládají a další kolo nabídne dosud nezvládnutá.',
-      style: TextStyle(color: Color(0xFF6E8177), height: 1.5),
+    Text(
+      _mixed
+          ? 'Slovíčka a gramatika se střídají. Do denního cíle 15 slovíček se počítají správné překlady; gramatika se ukládá do výsledků testu. Německá podstatná jména piš s velkým písmenem a rozlišuj sie / Sie.'
+          : 'V kole je až 15 slovíček. Témata se míchají. Po přihlášení se dnešní zvládnutá slovíčka ukládají a další kolo nabídne dosud nezvládnutá.',
+      style: const TextStyle(color: Color(0xFF6E8177), height: 1.5),
     ),
     const SizedBox(height: 12),
     TextButton.icon(
@@ -276,11 +273,17 @@ class _EnglishPageState extends State<EnglishPage> {
             entries: widget.entries,
             grade: widget.grade,
             sourceTitle: widget.sourceTitle,
+            subjectName: widget.subjectName,
+            mixed: _mixed,
           ),
         ),
       ),
       icon: const Icon(Icons.list_alt_rounded),
-      label: const Text('Prohlédnout všechna slovíčka'),
+      label: Text(
+        _mixed
+            ? 'Přehled slovíček a gramatiky'
+            : 'Prohlédnout všechna slovíčka',
+      ),
     ),
   ];
 
@@ -305,25 +308,33 @@ class _EnglishPageState extends State<EnglishPage> {
         Text(word.topic, style: const TextStyle(color: Color(0xFF6E8177))),
         const SizedBox(height: 24),
         Text(
-          word.english,
+          word.isGrammar ? word.czech : word.english,
           key: const ValueKey('flashcard-english'),
           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 20),
         if (_revealed)
           Text(
-            word.czech,
+            word.isGrammar ? word.english : word.czech,
             key: const ValueKey('flashcard-czech'),
             style: const TextStyle(fontSize: 24, color: Color(0xFF226552)),
           )
         else
-          const Text(
-            'Co to znamená česky? Zkus si odpověď říct nahlas.',
-            style: TextStyle(fontSize: 16, height: 1.5),
+          Text(
+            word.isGrammar
+                ? word.instruction!
+                : 'Co to znamená česky? Zkus si odpověď říct nahlas.',
+            style: const TextStyle(fontSize: 16, height: 1.5),
           ),
+        if (_revealed && word.explanation != null) ...[
+          const SizedBox(height: 12),
+          Text(word.explanation!, style: const TextStyle(height: 1.5)),
+        ],
         const SizedBox(height: 24),
         Text(
-          'Učebnice · strana ${word.page}',
+          word.page == 0
+              ? 'Sešit · dodané fotografie'
+              : 'Učebnice · strana ${word.page}',
           style: const TextStyle(fontSize: 12, color: Color(0xFF6E8177)),
         ),
       ]),
@@ -341,7 +352,9 @@ class _EnglishPageState extends State<EnglishPage> {
         }),
         child: Text(
           !_revealed
-              ? 'Ukázat překlad'
+              ? word.isGrammar
+                    ? 'Ukázat řešení'
+                    : 'Ukázat překlad'
               : _card + 1 < _round.length
               ? 'Další kartička'
               : 'Přejít na zkoušení',
@@ -364,7 +377,7 @@ class _EnglishPageState extends State<EnglishPage> {
         ),
       ),
       Text(
-        'Chyby: ${_roundProgress['mistakes']} · Slovíčka navíc: ${_roundProgress['mistakes']}',
+        'Chyby: ${_roundProgress['mistakes']} · $_extraLabel: ${_roundProgress['mistakes']}',
       ),
       const SizedBox(height: 12),
       LinearProgressIndicator(
@@ -384,7 +397,7 @@ class _EnglishPageState extends State<EnglishPage> {
         ),
         const SizedBox(height: 18),
         Text(
-          'Jak se řekne ${widget.answerLanguage}…',
+          word.instruction ?? 'Jak se řekne ${widget.answerLanguage}…',
           style: const TextStyle(fontSize: 15),
         ),
         const SizedBox(height: 8),
@@ -419,10 +432,44 @@ class _EnglishPageState extends State<EnglishPage> {
           },
         ),
         const SizedBox(height: 12),
+        if (widget.subject == 'german' && !checked)
+          Wrap(
+            spacing: 4,
+            children: [
+              for (final character in ['ä', 'ö', 'ü', 'ß', 'Ä', 'Ö', 'Ü'])
+                OutlinedButton(
+                  onPressed: _busy || _request != null
+                      ? null
+                      : () {
+                          final selection = _answer.selection;
+                          final start = selection.isValid
+                              ? selection.start
+                              : _answer.text.length;
+                          final end = selection.isValid ? selection.end : start;
+                          setState(
+                            () => _answer.value = TextEditingValue(
+                              text: _answer.text.replaceRange(
+                                start,
+                                end,
+                                character,
+                              ),
+                              selection: TextSelection.collapsed(
+                                offset: start + character.length,
+                              ),
+                            ),
+                          );
+                          _answerFocus.requestFocus();
+                        },
+                  child: Text(character),
+                ),
+            ],
+          ),
         if (!checked)
-          const Text(
-            'Piš slovy. Velká písmena, spojovníky a koncovou interpunkci neřešíme.',
-            style: TextStyle(
+          Text(
+            word.caseSensitive
+                ? 'Rozlišuj velká a malá písmena. Nezapomeň na přehlásky a ß. Koncovou interpunkci neřešíme.'
+                : 'Piš slovy. Velká písmena, spojovníky a koncovou interpunkci neřešíme.',
+            style: const TextStyle(
               fontSize: 12,
               color: Color(0xFF6E8177),
               height: 1.5,
@@ -459,6 +506,10 @@ class _EnglishPageState extends State<EnglishPage> {
                     'Přečti si správnou odpověď. $retryFeedback',
                     style: TextStyle(height: 1.5),
                   ),
+                ],
+                if (word.explanation != null) ...[
+                  const SizedBox(height: 12),
+                  Text(word.explanation!, style: const TextStyle(height: 1.5)),
                 ],
               ],
             ),
@@ -502,7 +553,7 @@ class _EnglishPageState extends State<EnglishPage> {
     ),
     const SizedBox(height: 12),
     Text(
-      'Zvládnuto: ${_roundProgress['completed']} z ${_roundProgress['total']}\nChyby: ${_roundProgress['mistakes']} · Slovíčka navíc: ${_roundProgress['mistakes']}',
+      'Zvládnuto: ${_roundProgress['completed']} z ${_roundProgress['total']}\nChyby: ${_roundProgress['mistakes']} · $_extraLabel: ${_roundProgress['mistakes']}',
       key: const ValueKey('vocabulary-result'),
       textAlign: TextAlign.center,
       style: const TextStyle(fontSize: 18, height: 1.6),
@@ -555,24 +606,30 @@ class VocabularyListPage extends StatelessWidget {
     required this.entries,
     required this.grade,
     required this.sourceTitle,
+    this.subjectName = 'Angličtina',
+    this.mixed = false,
   });
 
   final List<VocabularyEntry> entries;
   final int grade;
   final String sourceTitle;
+  final String subjectName;
+  final bool mixed;
 
   @override
   Widget build(BuildContext context) => SchoolPage(
-    title: 'Slovíčka · $grade. třída',
+    title: '${mixed ? subjectName : 'Slovíčka'} · $grade. třída',
     children: [
       Text(
         sourceTitle,
         style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
       ),
       const SizedBox(height: 12),
-      const Text(
-        'Přepsáno z dodaných fotografií. U školních výrazů používáme britskou angličtinu.',
-        style: TextStyle(height: 1.5),
+      Text(
+        mixed
+            ? 'Slovíčka a gramatika z dodaných fotografií se správnými tvary a vysvětlením.'
+            : 'Přepsáno z dodaných fotografií.',
+        style: const TextStyle(height: 1.5),
       ),
       const SizedBox(height: 20),
       for (final topic in entries.map((e) => e.topic).toSet())
@@ -585,8 +642,13 @@ class VocabularyListPage extends StatelessWidget {
             for (final word in entries.where((e) => e.topic == topic))
               ListTile(
                 title: Text(word.english),
-                subtitle: Text(word.czech),
-                trailing: Text('s. ${word.page}'),
+                subtitle: Text(
+                  [
+                    word.czech,
+                    if (word.explanation != null) word.explanation!,
+                  ].join('\n'),
+                ),
+                trailing: word.page == 0 ? null : Text('s. ${word.page}'),
               ),
           ],
         ),

@@ -20,6 +20,13 @@ async function itemPicker(client, userId, grade, subject, kind, state) {
   [userId, grade, subject, kind]);
   if (!items.length) return null;
   const used = new Set(state?.used ?? []);
+  const mixedLanguage = kind === 'vocabulary' && items.some(item => item.data.exerciseType === 'grammar');
+  const languageType = item => item.data.exerciseType ?? 'vocabulary';
+  const typeCounts = {};
+  for (const entry of state?.queue ?? []) {
+    const type = entry.problem.exerciseType ?? 'vocabulary';
+    typeCounts[type] = (typeCounts[type] ?? 0) + 1;
+  }
   const counts = {};
   for (const item of items) counts[item.data.group] = (counts[item.data.group] ?? 0) + item.used;
   for (const entry of state?.queue ?? []) {
@@ -31,8 +38,14 @@ async function itemPicker(client, userId, grade, subject, kind, state) {
     WHERE e.user_id=$1 AND e.grade=$2 AND e.subject=$3 ORDER BY a.answered_at DESC LIMIT 1`, [userId, grade, subject]) : { rows: [] };
   let lastGroup = last?.category;
   const pick = () => {
-    let options = items.filter(item => !used.has(item.id));
-    if (!options.length) { used.clear(); options = [...items]; }
+    let candidates = items;
+    if (mixedLanguage) {
+      const types = shuffle([...new Set(items.map(languageType))]);
+      types.sort((a, b) => (typeCounts[a] ?? 0) - (typeCounts[b] ?? 0));
+      candidates = items.filter(item => languageType(item) === types[0]);
+    }
+    let options = candidates.filter(item => !used.has(item.id));
+    if (!options.length) { for (const item of candidates) used.delete(item.id); options = [...candidates]; }
     if (kind === 'vocabulary' && options.some(item => !item.learned)) options = options.filter(item => !item.learned);
     shuffle(options);
     if (kind === 'math') {
@@ -40,6 +53,8 @@ async function itemPicker(client, userId, grade, subject, kind, state) {
         Number(a.data.group === lastGroup) - Number(b.data.group === lastGroup) || a.used - b.used);
     } else options.sort((a, b) => a.used - b.used);
     const item = options[0];
+    const type = languageType(item);
+    typeCounts[type] = (typeCounts[type] ?? 0) + 1;
     used.add(item.id);
     item.used++;
     counts[item.data.group]++;
@@ -77,10 +92,10 @@ async function save(client, userId, grade, subject, state) {
 async function activate(client, userId, grade, subject, kind, state) {
   const entry = state.queue[0];
   if (!entry) return;
-  await client.query(`INSERT INTO exercises(user_id,id,grade,subject,practice_item_id,test_id,math_problem,spelling_problem)
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT(user_id,id) DO UPDATE SET test_id=excluded.test_id`,
+  await client.query(`INSERT INTO exercises(user_id,id,grade,subject,practice_item_id,test_id,math_problem,spelling_problem,counts_as_word)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(user_id,id) DO UPDATE SET test_id=excluded.test_id`,
   [userId, entry.exerciseId, grade, subject, entry.itemId, state.id,
-    kind === 'math' ? entry.problem : null, kind === 'spelling' ? entry.problem : null]);
+    kind === 'math' ? entry.problem : null, kind === 'spelling' ? entry.problem : null, entry.problem.exerciseType !== 'grammar']);
 }
 
 export async function startPractice(pool, userId, grade, subject, kind, newRound = false) {
@@ -113,7 +128,7 @@ export async function startPractice(pool, userId, grade, subject, kind, newRound
   } finally { client.release(); }
 }
 
-const normalize = answer => answer.trim().toLowerCase().replace(/[’‘]/g, "'").replace(/[.!?,]+$/g, '')
+const normalize = (answer, caseSensitive) => (caseSensitive ? answer : answer.toLowerCase()).trim().replace(/[’‘]/g, "'").replace(/[.!?,]+$/g, '')
   .replace(/[-–]/g, ' ').replace(/\s+/g, ' ').trim();
 
 export async function answerPractice(pool, userId, kind, { id, exerciseId, step, answer, revision = 0 }) {
@@ -141,7 +156,7 @@ export async function answerPractice(pool, userId, kind, { id, exerciseId, step,
     }
     const correct = kind === 'math' ? answer === problem.answer : kind === 'spelling'
       ? answer === problem[step === 0 ? 'letter' : 'reason']
-      : [problem.english, ...(problem.alternatives ?? [])].some(value => normalize(value) === normalize(answer));
+      : [problem.english, ...(problem.alternatives ?? [])].some(value => normalize(value, problem.caseSensitive) === normalize(answer, problem.caseSensitive));
     const completed = correct && (kind === 'math' ? !problem.nextStep : kind === 'spelling' ? step === 1 : true);
     state.started = true;
     if (!correct) {

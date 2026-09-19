@@ -28,10 +28,27 @@ class TestSession {
 
   Map<String, dynamic> _pick(Map<String, dynamic> state) {
     final used = (state['used'] as List).cast<String>();
-    var options = items.where((item) => !used.contains(item['id'])).toList();
+    var candidates = items;
+    if (kind == 'vocabulary' &&
+        items.any((item) => item['data']['exerciseType'] == 'grammar')) {
+      String type(Map<String, dynamic> item) =>
+          item['data']['exerciseType'] as String? ?? 'vocabulary';
+      final counts = <String, int>{};
+      for (final entry in state['queue'] as List) {
+        final category =
+            entry['problem']['exerciseType'] as String? ?? 'vocabulary';
+        counts[category] = (counts[category] ?? 0) + 1;
+      }
+      final types = items.map(type).toSet().toList()..shuffle();
+      types.sort((a, b) => (counts[a] ?? 0).compareTo(counts[b] ?? 0));
+      candidates = items.where((item) => type(item) == types.first).toList();
+    }
+    var options = candidates
+        .where((item) => !used.contains(item['id']))
+        .toList();
     if (options.isEmpty) {
-      used.clear();
-      options = List.of(items);
+      used.removeWhere((id) => candidates.any((item) => item['id'] == id));
+      options = List.of(candidates);
     }
     options.shuffle();
     if (kind == 'math') {

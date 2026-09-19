@@ -7,7 +7,7 @@ Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
-Na úvodu je rozcestník **7. třída → Angličtina**, **5. třída → Matematika / Angličtina**
+Na úvodu je rozcestník **7. třída → Angličtina / Čeština / Němčina**, **5. třída → Matematika / Angličtina**
 a **3. třída → Matematika**.
 Z předmětu se lze vrátit na výběr předmětů a tříd.
 
@@ -119,6 +119,34 @@ Migrace `spelling-v1` jednorázově přidá předmět, kurz a `server/spelling-s
 Další úlohy lze importovat do databáze; postup a formát jsou v [CONTENT.md](CONTENT.md).
 Pravidla shody odpovídají [Internetové jazykové příručce ÚJČ](https://prirucka.ujc.cas.cz/?id=600),
 včetně zvláštního případu „děti viděly“. Písmena i důvody ověřuje server.
+
+## 7. třída — Němčina
+
+Na `/#/7-trida/nemcina` je 68 zadání z fotografií sešitu: 21 slovíček a 47
+gramatických úloh. Každé kolo míchá přibližně napůl překlady a gramatiku:
+
+- Jídlo, pití, ovoce, zelenina, vlastnosti a slovesa. Podstatná jména se učí
+  včetně určitého členu v 1. pádě.
+- Členy der/die/das, osobní zájmena včetně rozlišení sie/Sie, přítomné časování
+  haben a kochen a překlad šesti vět s haben a 4. pádem.
+- Psané odpovědi rozlišují velká písmena, přehlásky a ß. Pro ä/ö/ü/ß jsou
+  tlačítka pod odpovědí. Mezery a koncová interpunkce se tolerují.
+- Kartičky gramatiky nejdřív ukazují zadání a až po odhalení správný tvar
+  s vysvětlením. Test ukazuje vysvětlení po správné i chybné odpovědi.
+- Chyby prodlužují stejné uložené kolo a úloha se vrací později. Výsledky
+  se ukládají pod Němčinu v 7. třídě. Do denního cíle slovíček vstupují jen
+  překlady, gramatické odpovědi se do tohoto cíle nepočítají.
+
+Přepis opravuje chyby v sešitě: `du hast` a mužský člen ve 4. pádě `den`
+ve větách s Wein, Saft a Apfel. Časování je ověřené podle
+[Duden](https://www.duden.de/konjugation/haben_Vollverb), pády a zájmena podle
+[Goethe-Institutu](https://www.goethe.de/ins/de/de/m/prf/grm.html).
+U zeleniny Paprika jsou uznány oba členy der/die.
+
+Migrace `german-v1` jednorázově importuje `server/german-seed.json`. Nová zadání
+a úpravy se dále přidávají běžným databázovým importem bez vydání aplikace.
+Rozlišení slovíčka/gramatika se při přidělení ukládá do `exercises.counts_as_word`,
+takže změna obsahu zpětně nemění splnění denního cíle.
 
 ## 7. třída — Angličtina
 

@@ -35,6 +35,13 @@ export function validateItem(data, kind, maxDigits, depth = 0) {
     assert(kind === 'vocabulary' && text(data.english) && text(data.czech) && text(data.topic, 100), 'Chybí slovíčko, překlad nebo téma.');
     assert(integer(data.page, 0, 9999) && Array.isArray(data.alternatives) &&
       data.alternatives.length <= 30 && data.alternatives.every(a => text(a)), 'Neplatná stránka nebo alternativní odpovědi.');
+    assert(data.exerciseType == null || ['vocabulary', 'grammar'].includes(data.exerciseType), 'Neplatný typ jazykové úlohy.');
+    assert(data.caseSensitive == null || typeof data.caseSensitive === 'boolean', 'caseSensitive musí být boolean.');
+    for (const field of ['instruction', 'explanation']) {
+      assert(data[field] == null || text(data[field], 1000), `Neplatné pole ${field}.`);
+    }
+    assert(data.exerciseType !== 'grammar' || (text(data.instruction, 1000) && text(data.explanation, 1000)),
+      'Gramatická úloha vyžaduje pokyn a vysvětlení.');
   }
 }
 

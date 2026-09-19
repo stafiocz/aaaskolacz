@@ -365,6 +365,7 @@ class _ResultsPageState extends State<ResultsPage> {
     final label = switch (rows.first['subjectKind']) {
       'math' => 'Dokončeno příkladů',
       'spelling' => 'Dokončeno úloh s odůvodněním',
+      'vocabulary' when rows.first['subject'] == 'german' => 'Zvládnuto úloh',
       _ => 'Zvládnuto slovíček',
     };
     int sum(String key) => rows.fold(0, (total, r) => total + (r[key] as int));
