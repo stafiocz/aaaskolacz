@@ -1,10 +1,10 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import 'progress.dart';
 import 'progress_widgets.dart';
 import 'school_widgets.dart';
+import 'test_session.dart';
+import 'test_progress.dart';
 
 class SpellingPage extends StatefulWidget {
   const SpellingPage({
@@ -31,14 +31,14 @@ class _SpellingPageState extends State<SpellingPage> {
   String? _owner;
   Map<String, dynamic>? _exercise;
   Map<String, dynamic>? _request;
-  final List<Map<String, dynamic>> _remaining = [];
+  late TestSession _test;
+  Map<String, dynamic>? _roundProgress;
   bool _busy = false;
   bool _completed = false;
   bool _incorrect = false;
   String? _error;
   int _version = 0;
 
-  String get _course => 'spelling/${widget.grade}/${widget.subject}';
   Map<String, dynamic> get _problem =>
       _exercise!['problem'] as Map<String, dynamic>;
   int get _step => _exercise!['step'] as int;
@@ -53,11 +53,18 @@ class _SpellingPageState extends State<SpellingPage> {
     _owner = owner;
     _exercise = null;
     _request = null;
-    _remaining.clear();
+    _test = TestSession(
+      progress: _progress,
+      kind: 'spelling',
+      grade: widget.grade,
+      subject: widget.subject,
+      items: widget.items,
+    );
+    _roundProgress = null;
     _load();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool newRound = false}) async {
     final version = ++_version;
     final owner = _owner;
     setState(() {
@@ -65,36 +72,11 @@ class _SpellingPageState extends State<SpellingPage> {
       _error = null;
     });
     try {
-      Map<String, dynamic>? exercise;
-      if (owner != 'guest') {
-        exercise = await _progress!.practiceRequest('spelling', 'exercise', {
-          'grade': widget.grade,
-          'subject': widget.subject,
-        });
-      } else {
-        exercise = _progress?.guestMath(_course);
-        if (exercise == null) {
-          if (_remaining.isEmpty) {
-            _remaining.addAll(widget.items);
-            _remaining.shuffle(Random());
-          }
-          final item = _remaining.removeLast();
-          final problem = Map<String, dynamic>.from(item['data'] as Map);
-          problem['reasons'] = List<dynamic>.from(problem['reasons'] as List)
-            ..shuffle(Random());
-          exercise = {
-            'exerciseId': newExerciseId(),
-            'itemId': item['id'],
-            'step': 0,
-            'problem': problem,
-          };
-          _progress?.saveGuestMath(_course, exercise);
-        }
-        _remaining.removeWhere((item) => item['id'] == exercise!['itemId']);
-      }
+      final exercise = await _test.load(newRound: newRound);
       if (!mounted || version != _version || owner != _owner) return;
       setState(() {
-        _exercise = exercise;
+        _roundProgress = exercise['progress'] as Map<String, dynamic>?;
+        _exercise = _roundProgress?['finished'] == true ? null : exercise;
         _request = null;
         _completed = false;
         _incorrect = false;
@@ -114,7 +96,7 @@ class _SpellingPageState extends State<SpellingPage> {
   }
 
   Future<void> _answer(String answer) async {
-    if (_busy || _completed || _exercise == null) return;
+    if (_busy || _completed || _incorrect || _exercise == null) return;
     final version = _version;
     final owner = _owner;
     setState(() {
@@ -122,32 +104,20 @@ class _SpellingPageState extends State<SpellingPage> {
       _error = null;
     });
     try {
-      bool correct;
-      if (owner != 'guest') {
-        _request ??= {
-          'id': newExerciseId(),
-          'exerciseId': _exercise!['exerciseId'],
-          'step': _step,
-          'answer': answer,
-        };
-        final result = await _progress!.practiceRequest(
-          'spelling',
-          'answer',
-          _request!,
-        );
-        correct = result['correct'] as bool;
-      } else {
-        correct = answer == _problem[_step == 0 ? 'letter' : 'reason'];
-        if (correct) {
-          _progress?.saveGuestMath(
-            _course,
-            _step == 1 ? null : {..._exercise!, 'step': 1},
-          );
-        }
-      }
+      _request ??= {
+        'id': newExerciseId(),
+        'exerciseId': _exercise!['exerciseId'],
+        'step': _step,
+        'revision': _exercise!['revision'] ?? 0,
+        'answer': answer,
+      };
+      final result = await _test.answer(_request!);
+      final correct = result['correct'] as bool;
       if (!mounted || version != _version || owner != _owner) return;
       setState(() {
         _request = null;
+        _roundProgress =
+            result['progress'] as Map<String, dynamic>? ?? _roundProgress;
         _incorrect = !correct;
         if (correct) {
           _completed = _step == 1;
@@ -175,7 +145,7 @@ class _SpellingPageState extends State<SpellingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final enabled = !_busy && !_completed && _request == null;
+    final enabled = !_busy && !_completed && !_incorrect && _request == null;
     return SchoolPage(
       title: '${widget.subjectName} · ${widget.gradeName}',
       children: [
@@ -188,6 +158,12 @@ class _SpellingPageState extends State<SpellingPage> {
           'Nejdřív doplň písmeno. Potom vyber správné zdůvodnění. Úloha je hotová až po obou krocích.',
         ),
         const SizedBox(height: 24),
+        TestProgress(
+          progress: _exercise == null || _roundProgress == null
+              ? _roundProgress
+              : {..._roundProgress!, 'finished': false},
+          onNewRound: _busy ? null : () => _load(newRound: true),
+        ),
         if (_exercise != null) ...[
           Text(
             _completed
@@ -283,12 +259,17 @@ class _SpellingPageState extends State<SpellingPage> {
             Semantics(
               liveRegion: true,
               child: Text(
-                _step == 0
-                    ? 'Ještě to není správně. Podívej se na celou větu a zkus to znovu.'
-                    : 'Toto zdůvodnění nesedí. Urči podmět, nebo pád a vzor podstatného jména. Zkus to znovu.',
+                'Správně: ${_problem['letter']}. ${_problem['explanation']}\n\n$retryFeedback',
                 style: const TextStyle(color: Color(0xFF9A451C), fontSize: 17),
               ),
             ),
+          if (_incorrect) ...[
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: _busy ? null : _load,
+              child: const Text('Pokračovat'),
+            ),
+          ],
           if (_completed) ...[
             Semantics(
               liveRegion: true,
@@ -320,7 +301,9 @@ class _SpellingPageState extends State<SpellingPage> {
         ],
         if (!_busy &&
             (_error != null ||
-                (_exercise == null && _progress?.ready == true))) ...[
+                (_exercise == null &&
+                    _roundProgress?['finished'] != true &&
+                    _progress?.ready == true))) ...[
           const SizedBox(height: 20),
           Text(_error ?? 'Účet se nepodařilo načíst. Zkus to znovu.'),
           FilledButton(

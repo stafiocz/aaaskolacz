@@ -6,8 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { dailyGoals, dailyStats, hashToken, login, saveAttempt, secretToken } from './database.js';
 import { verifyGoogle } from './auth.js';
 import { readCatalog } from './catalog.js';
-import { startMath, answerMath } from './math.js';
-import { startSpelling, answerSpelling } from './spelling.js';
+import { startPractice, answerPractice } from './practice.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
@@ -106,49 +105,33 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
     const result = await saveAttempt(pool, req.session.id, body);
     res.status(result === 'conflict' ? 409 : result === 'created' ? 201 : 200).json({ result });
   });
-  app.post('/api/math/exercise', async (req, res) => {
-    const { grade, subject } = req.body ?? {};
-    if (!Number.isInteger(grade) || grade < 1 || grade > 99 ||
-        typeof subject !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/.test(subject)) {
-      return res.status(400).json({ error: 'Invalid course' });
-    }
-    const exercise = await startMath(pool, req.session.id, grade, subject);
-    if (!exercise) return res.status(404).json({ error: 'Math course unavailable' });
-    res.json(exercise);
-  });
-  app.post('/api/math/answer', async (req, res) => {
-    const body = req.body ?? {};
-    if (!uuid.test(body.id) || !uuid.test(body.exerciseId) ||
-        !Number.isInteger(body.step) || body.step < 0 || body.step > 10 ||
-        !Number.isInteger(body.answer) || body.answer < 0 || body.answer > 9999999) {
-      return res.status(400).json({ error: 'Invalid answer' });
-    }
-    const result = await answerMath(pool, req.session.id, body);
-    if (!result) return res.status(409).json({ error: 'Exercise has changed' });
-    res.json(result);
-  });
+  for (const kind of ['math', 'spelling', 'vocabulary']) {
+    app.post(`/api/${kind}/exercise`, async (req, res) => {
+      const { grade, subject, newRound = false } = req.body ?? {};
+      if (!Number.isInteger(grade) || grade < 1 || grade > 99 || typeof newRound !== 'boolean' ||
+          typeof subject !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/.test(subject)) {
+        return res.status(400).json({ error: 'Invalid course' });
+      }
+      const exercise = await startPractice(pool, req.session.id, grade, subject, kind, newRound);
+      if (!exercise) return res.status(404).json({ error: 'Course unavailable' });
+      res.json(exercise);
+    });
+    app.post(`/api/${kind}/answer`, async (req, res) => {
+      const body = req.body ?? {};
+      if (!uuid.test(body.id) || !uuid.test(body.exerciseId) ||
+          !Number.isInteger(body.step) || body.step < 0 || body.step > (kind === 'math' ? 10 : kind === 'spelling' ? 1 : 0) ||
+          (body.revision != null && (!Number.isInteger(body.revision) || body.revision < 0)) ||
+          (kind === 'math' ? !Number.isInteger(body.answer) || body.answer < 0 || body.answer > 9999999
+            : typeof body.answer !== 'string' || body.answer.length > (kind === 'spelling' ? 64 : 500))) {
+        return res.status(400).json({ error: 'Invalid answer' });
+      }
+      const result = await answerPractice(pool, req.session.id, kind, body);
+      if (!result) return res.status(409).json({ error: 'Exercise has changed' });
+      res.json(result);
+    });
+  }
   app.get('/api/daily-goals', async (req, res) => {
     res.json(await dailyGoals(pool, req.session.id));
-  });
-  app.post('/api/spelling/exercise', async (req, res) => {
-    const { grade, subject } = req.body ?? {};
-    if (!Number.isInteger(grade) || grade < 1 || grade > 99 ||
-        typeof subject !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/.test(subject)) {
-      return res.status(400).json({ error: 'Invalid course' });
-    }
-    const exercise = await startSpelling(pool, req.session.id, grade, subject);
-    if (!exercise) return res.status(404).json({ error: 'Spelling course unavailable' });
-    res.json(exercise);
-  });
-  app.post('/api/spelling/answer', async (req, res) => {
-    const body = req.body ?? {};
-    if (!uuid.test(body.id) || !uuid.test(body.exerciseId) || ![0, 1].includes(body.step) ||
-        typeof body.answer !== 'string' || body.answer.length > 64) {
-      return res.status(400).json({ error: 'Invalid answer' });
-    }
-    const result = await answerSpelling(pool, req.session.id, body);
-    if (!result) return res.status(409).json({ error: 'Exercise has changed' });
-    res.json(result);
   });
   app.get('/api/stats', async (req, res) => {
     const { from, to } = req.query;

@@ -11,25 +11,38 @@ Na úvodu je rozcestník **7. třída → Angličtina**, **5. třída → Matema
 a **3. třída → Matematika**.
 Z předmětu se lze vrátit na výběr předmětů a tříd.
 
-## Rozpracovaná matematika
+## Testy, chyby a rozpracované kolo
 
-Odchod z předmětu nevylosuje nový příklad. Přihlášený účet má pro každou
-třídu a matematický předmět jedno rozpracované zadání uložené v databázi.
-Zůstává stejné po návratu, obnovení stránky, odhlášení i na jiném zařízení.
-Nové zadání dostane žák až po správném dokončení celého příkladu; řetězec
-pokračuje od prvního nedokončeného kroku. Půlnoc rozpracovaný příklad nemění.
+Matematika, čeština a slovíčka mají kola po 15 úlohách (u slovníku s méně
+položkami začíná kolo jejich počtem). Po každé chybě se zobrazí řešení a tlačítko
+**Pokračovat**. Stejná úloha se vrátí po třech dalších zadáních. Zároveň se
+přidá **jedna nová úloha navíc**: dvě chyby prodlouží kolo z 15 na 17 úloh.
+Chyba při opakování i anglické **Nevím** prodlužují kolo stejným způsobem.
+Na konci kola, kdy zbývá méně úloh, přijde opakování po těch zbývajících.
 
-Server vybírá vyvážený mix skupin a postupně prochází jejich zadání.
-`POST /api/math/exercise` vrací stávající příklad nebo přidělí další po dokončení.
-`POST /api/math/answer` ověří číselnou odpověď a atomicky uloží výsledek i krok.
-Opakované odeslání stejné odpovědi se stejným ID se nezapočítá dvakrát;
-zastaralý krok z jiné karty se odmítne. Úprava obsahu v databázi nepřepíše
-již rozpracované zadání. Migrace zachovává dosavadní historii.
+Kolo končí až po správném dokončení všech původních i přidaných úloh.
+Chybný početní řetězec a česká úloha se opakují od prvního kroku; čeština
+vždy vyžaduje správné písmeno i zdůvodnění. Počítadlo ukazuje dokončené úlohy,
+celkový počet, chyby i přidané úlohy. Denní cíl zůstává 15 příkladů a 15
+různých slovíček; přidané úlohy se běžně započítávají do historie.
 
-Přihlášené počítání vyžaduje spojení se serverem. Při výpadku se příklad
-nevymění a odpověď lze odeslat znovu. Hostovi se zadání a rozpracovaný krok
-uchovají v úložišti daného prohlížeče, bez započítání do účtu. Smazání tohoto
-úložiště může vymazat postup hosta; postup přihlášeného účtu zůstává v databázi.
+Přihlášený účet má každé kolo v `practice_tests` v PostgreSQL, zvlášť pro třídu
+a předmět. Odchod, obnovení stránky, další karta, odhlášení ani půlnoc nemění
+aktuální zadání, frontu oprav ani prodloužení. Další kolo lze založit až po
+dokončení stávajícího. Host má stejný postup uložený v daném prohlížeči.
+Smazání úložiště může vymazat postup hosta, účet má postup v databázi.
+
+`POST /api/{math,spelling,vocabulary}/exercise` vrací aktuální zadání a pokrok;
+`newRound: true` založí nové kolo pouze po dokončení předchozího.
+`POST /api/{math,spelling,vocabulary}/answer` ověří odpověď a atomicky uloží
+výsledek, frontu i případnou další úlohu. ID pokusu zajišťuje, že opakované
+odeslání při výpadku nepřidá chybu ani úlohu dvakrát. Číslo opakování `revision`
+a krok chrání před zastaralou odpovědí z jiné karty.
+
+Zadání v kole jsou uložená jako snímky, úpravy katalogu je nemění. Migrace
+převezme již rozpracované matematické a české zadání včetně aktuálního kroku.
+Přihlášené zkoušení vyžaduje spojení se serverem. Při výpadku se samo nepřepne
+na nové zadání hosta; odpověď lze bezpečně odeslat znovu.
 
 ## 3. třída — Matematika
 
@@ -45,14 +58,13 @@ Procvičování automaticky míchá všechny typy příkladů:
 Každý příklad má jednoznačnou celočíselnou odpověď. Nikdy se nedělí nulou.
 Mix obsahuje také 24 příkladů na sčítání a odčítání do 100 z fotografií sešitu
 ze 17. září. Výsledky se počítají z operandů, nepřebírají chybné odpovědi z fotek.
-Každá šestice obsahuje všechny typy v náhodném pořadí; stejný typ nenásleduje
-hned po sobě ani na přechodu mezi šesticemi. Oblasti se ručně nevybírají.
+Základní kolo vybírá vyvážený mix typů. Opravy zachovávají původní zadání. Oblasti se ručně nevybírají.
 
 - Náhodný příklad, velká klávesnice na displeji a kontrola odpovědi.
-- Po chybě zůstane stejný příklad; první nová číslice nahradí chybnou odpověď.
+- Po chybě se zobrazí správná odpověď; příklad se zařadí k pozdějšímu opakování.
 - Po správné odpovědi se zobrazí pochvala a tlačítko **Další příklad**.
-- Počítadlo vyřešených příkladů platí pro aktuální spuštění napříč typy cvičení.
-- Další příklad automaticky změní typ cvičení a vymaže předchozí odpověď.
+- Počítadlo vyřešených příkladů platí pro uložené kolo napříč typy cvičení.
+- Další příklad vymaže předchozí odpověď.
 - **C** smaže celou odpověď, **⌫** poslední číslici.
 - Fungují také číslice na fyzické klávesnici, Enter, Backspace a Delete/Escape.
 
@@ -68,9 +80,9 @@ Mix na `/#/5-trida/matematika` vychází z fotografií pracovního sešitu
 - Násobení a dělení čísly 10, 100 a 1 000 i dalšími násobky deseti.
 - Doplňování činitelů, dělence, dělitele a podílu. Pokyn pojmenuje hledané číslo.
 - Početní řetězce se dvěma navazujícími kroky. Body se přičítají až za celý
-  dokončený řetězec; chyba ponechá dítě u stejného kroku.
+  dokončený řetězec; chyba vrací celý řetězec k pozdějšímu opakování.
 
-V každé osmici se vystřídá všech osm typů, stejný typ nejde dvakrát za sebou.
+Základní kolo vyváženě střídá všech osm typů, opravy se vracejí ve frontě.
 Všechny výsledky jsou nezáporná celá čísla, dělení je přesné a bez nulového
 dělitele. Čísla mají oddělené tisíce; klávesnice na displeji i fyzická klávesnice
 přijmou až sedm číslic. Procvičování 3. třídy si ponechává vlastní rozsahy a mix.
@@ -97,7 +109,7 @@ listu z 15. září. Každé zadání ukazuje celou větu s jednou mezerou:
    pád a číslo podstatného jména. Pořadí možností se při přidělení promíchá.
 3. Teprve správné zdůvodnění dokončí úlohu a zobrazí celé vysvětlení.
 
-Chyba nechá žáka u stejného kroku. Server ukládá rozpracovanou úlohu včetně
+Chyba vrátí celou úlohu k pozdějšímu opakování a přidá jednu další. Server ukládá rozpracovanou úlohu včetně
 pořadí možností; návrat, obnovení stránky, další karta ani nové přihlášení
 nevylosují jiné zadání. Host má rozpracovaný krok uložený v prohlížeči.
 Historie češtiny počítá odpovědi v obou krocích a jednu dokončenou úlohu
@@ -117,23 +129,22 @@ uznávané odpovědi. V aplikaci lze otevřít přehled všech slovíček.
 
 ### Jak se procvičuje angličtina v obou třídách
 
-- Kolo obsahuje nejvýše 15 položek napříč tématy. V rámci návštěvy se postupně
-  projde celý slovník, teprve potom se začne znovu.
+- Kolo začíná 15 položkami napříč tématy (nebo počtem dostupných slovíček, je-li menší).
+  Chyby ho prodlužují. Výběr upřednostňuje dosud nezvládnutá slovíčka.
 - Kartička ukáže anglický výraz; dítě si vybaví český význam a odhalí překlad.
 - Po kartičkách následuje zkoušení v náhodném pořadí: české zadání a psaná anglická
   odpověď. Lze také začít rovnou zkoušením.
-- Chyba nebo **Nevím** zobrazí správnou odpověď a vrátí položku za ostatní otázky.
-  Kolo skončí, až dítě všechny výrazy správně napíše. Výsledek ukáže i počet
-  správných odpovědí na první pokus.
+- Chyba nebo **Nevím** zobrazí správnou odpověď, vrátí položku po třech dalších
+  zadáních a přidá jedno slovíčko navíc. Kolo skončí po správném napsání všech
+  výrazů. Výsledek ukáže dokončené úlohy a počet chyb a přidaných slovíček.
 - Kontrola toleruje velká písmena, mezery, spojovníky, typografické apostrofy
   a koncovou interpunkci; běžné alternativy jsou uvedené přímo ve slovníku.
-- Průběh se uchovává jen při otevřeném procvičování. Obnovení stránky nebo návrat
-  na předměty začne nové kolo, uložený denní pokrok přihlášeného účtu zůstává.
+- Průběh kola se uchovává i po obnovení stránky nebo návratu na předměty.
   Dnes zvládnutá slovíčka se při výběru dalšího kola vynechají, dokud zbývají jiná.
 
 Procvičování funguje i bez účtu. Na webu lze přes Google ukládat výsledky;
-Nabídka a obsah se načítají z databáze. Angličtina a počítání hosta se
-vyhodnocují lokálně, přihlášenou matematiku přiděluje a ověřuje server.
+Nabídka a obsah se načítají z databáze. Procvičování hosta se
+vyhodnocuje lokálně, přihlášené testy přiděluje a ověřuje server.
 Při otevření aplikace je potřeba připojení k internetu.
 
 ## Obsah v databázi
@@ -195,12 +206,11 @@ Přehled pro každý den zvoleného měsíce odděluje třídy a předměty:
 výsledky každého dítěte použijte jeho vlastní účet. API ověřuje Google ID token,
 nonce, původ požadavku, serverovou session a CSRF token. Session trvá 30 dní,
 cookie je HttpOnly/Secure/SameSite=Lax a v databázi je jen hash session tokenu.
-Ukládá se jméno, e-mail, výsledky, číselné odpovědi přihlášené matematiky
-a zvolená písmena a důvody u češtiny;
-neukládá se Google token ani zadaný text u slovíček. Vyhodnocení slovíček
-a starších verzí aplikace API přebírá od klienta; nejde o zabezpečený školní test.
+Ukládá se jméno, e-mail, výsledky a odeslané odpovědi včetně překladů slovíček.
+Google token se neukládá. Odpovědi v nových testech vyhodnocuje server;
+staré čekající výsledky zůstávají kompatibilní s původním API.
 
-Čekající odpovědi slovíček a starších verzí se uloží do prohlížeče pod ID účtu a při výpadku se opakují
+Čekající odpovědi ze starších verzí se uloží do prohlížeče pod ID účtu a při výpadku se opakují
 se stejným ID bez dvojího započítání. Po opětovném přihlášení stejným účtem se
 odešlou i po obnovení stránky. Jinému účtu se nepřiřadí. Čas odpovědi vychází
 z hodin zařízení; nesmí být více než pět minut v budoucnosti. Smazání dat

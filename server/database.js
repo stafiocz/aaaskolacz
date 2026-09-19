@@ -35,6 +35,18 @@ export async function migrate(pool) {
       await importContent(client, JSON.parse(await readFile(new URL('./spelling-seed.json', import.meta.url), 'utf8')));
       await client.query("INSERT INTO content_migrations(version) VALUES ('spelling-v1')");
     }
+    await client.query(`CREATE TABLE IF NOT EXISTS practice_tests (
+      user_id uuid REFERENCES users(id) ON DELETE CASCADE,
+      grade integer NOT NULL,
+      subject text NOT NULL,
+      state jsonb NOT NULL,
+      PRIMARY KEY(user_id,grade,subject),
+      FOREIGN KEY(grade,subject) REFERENCES school_courses(grade,subject)
+    );
+    ALTER TABLE exercises ADD COLUMN IF NOT EXISTS test_id uuid;
+    ALTER TABLE attempts ADD COLUMN IF NOT EXISTS test_revision integer;
+    ALTER TABLE attempts ADD COLUMN IF NOT EXISTS test_answer jsonb;
+    ALTER TABLE attempts ADD COLUMN IF NOT EXISTS test_result jsonb`);
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -74,7 +86,7 @@ export async function saveAttempt(pool, userId, attempt) {
       'SELECT * FROM exercises WHERE user_id = $1 AND id = $2 FOR UPDATE', [userId, exerciseId]);
     const { rows: [existing] } = await client.query(
       'SELECT * FROM attempts WHERE user_id = $1 AND id = $2', [userId, id]);
-    if (exercise.math_problem || exercise.spelling_problem || exercise.subject !== subject || exercise.grade !== grade || exercise.practice_item_id !== itemId ||
+    if (exercise.test_id || exercise.math_problem || exercise.spelling_problem || exercise.subject !== subject || exercise.grade !== grade || exercise.practice_item_id !== itemId ||
         (existing && (existing.exercise_id !== exerciseId || existing.correct !== correct || existing.completed !== completed ||
           existing.answered_at.getTime() !== Date.parse(occurredAt))) ||
         (!existing && exercise.completed)) {

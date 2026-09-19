@@ -1,4 +1,5 @@
 import 'catalog_fixture.dart';
+import 'package:aaaskola/test_session.dart';
 import 'daily_goals_fixture.dart';
 import 'dart:convert';
 import 'package:aaaskola/english_page.dart';
@@ -30,12 +31,48 @@ void main() {
     MathProblem? problem;
     String? exerciseId;
     var step = 0;
+    final vocabularyTest = TestSession(
+      progress: null,
+      kind: 'vocabulary',
+      grade: 5,
+      subject: 'english',
+      items: [
+        for (final word in words)
+          {
+            'id': word.english,
+            'data': {
+              'english': word.english,
+              'czech': word.czech,
+              'topic': word.topic,
+              'page': word.page,
+              'alternatives': <String>[],
+            },
+          },
+      ],
+    );
     progress = ProgressController(
       enabled: true,
       baseUrl: Uri.parse('https://aaaskola.cz'),
       readPending: (_) => null,
       writePending: (_, _) {},
       client: MockClient((request) async {
+        if (request.url.path == '/api/vocabulary/exercise') {
+          return http.Response(
+            jsonEncode(await vocabularyTest.load()),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
+        if (request.url.path == '/api/vocabulary/answer') {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          final result = await vocabularyTest.answer(body);
+          attempts.add({...body, ...result, 'subject': 'english', 'grade': 5});
+          return http.Response(
+            jsonEncode(result),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }
         if (request.url.path == '/api/math/exercise') {
           if (problem == null) {
             problem = practice.next();
@@ -186,6 +223,7 @@ void main() {
       await submit(tester);
       expect(attempts.single['correct'], false);
       expect(attempts.single['completed'], false);
+      await submit(tester);
       for (var index = 0; index < grade5Modes.length; index++) {
         await answerCorrectly(tester);
         await submit(tester);
@@ -234,7 +272,8 @@ void main() {
       await tapText(tester, 'Pokračovat');
       await answer(tester);
       await answer(tester);
-      expect(attempts, hasLength(3));
+      await answer(tester);
+      expect(attempts, hasLength(4));
       expect(attempts.last['exerciseId'], attempts.first['exerciseId']);
       expect(attempts.last['completed'], true);
       expect(

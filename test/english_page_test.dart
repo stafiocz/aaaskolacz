@@ -113,7 +113,7 @@ void main() {
       await tapText(tester, 'Pokračovat');
     }
     expect(find.text('Kolo je hotové!'), findsOneWidget);
-    expect(find.textContaining('Na první pokus: 15 z 15'), findsOneWidget);
+    expect(find.textContaining('Zvládnuto: 15 z 15'), findsOneWidget);
     await tapText(tester, 'Další kolo s kartičkami');
     await tapText(tester, 'Ukázat překlad');
     final next = tester
@@ -161,13 +161,14 @@ void main() {
     await tapText(tester, 'Pokračovat');
     expect(prompt(tester), isNot(original));
     await answer(tester);
+    await answer(tester);
     expect(prompt(tester), original);
     expect(find.text('Ještě jednou z paměti'), findsOneWidget);
     await answer(tester);
     expect(find.text('Kolo je hotové!'), findsOneWidget);
     expect(
       tester.widget<Text>(find.byKey(const ValueKey('vocabulary-result'))).data,
-      contains('Na první pokus: 1 z 2'),
+      contains('Zvládnuto: 3 z 3'),
     );
     await tapText(tester, 'Další kolo zkoušení');
     expect(find.text('ZKOUŠENÍ · Zvládnuto 0 / 2'), findsOneWidget);
@@ -180,8 +181,9 @@ void main() {
     await tapText(tester, 'Rovnou se vyzkoušet');
     await tapText(tester, 'Nevím · ukázat odpověď');
     expect(find.byKey(const ValueKey('vocabulary-solution')), findsOneWidget);
-    expect(find.text('ZKOUŠENÍ · Zvládnuto 0 / 2'), findsOneWidget);
+    expect(find.text('ZKOUŠENÍ · Zvládnuto 0 / 3'), findsOneWidget);
     await tapText(tester, 'Pokračovat');
+    await answer(tester);
     await answer(tester);
     expect(find.text('Ještě jednou z paměti'), findsOneWidget);
   });

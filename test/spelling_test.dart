@@ -83,13 +83,15 @@ void main() {
       await tap(tester, find.byKey(const Key('letter-i')));
       expect(find.text('Další úloha'), findsNothing);
       await reopen(tester);
-      expect(saved.values.single, original);
+      expect(jsonDecode(saved.values.single!)['total'], 16);
+      expect(
+        jsonDecode(saved.values.single!)['queue'][0]['exerciseId'],
+        isNot(jsonDecode(original)['queue'][0]['exerciseId']),
+      );
       await tap(tester, find.byKey(const Key('letter-y')));
       expect(find.text('2/2 · Zdůvodni pravopis'), findsOneWidget);
       expect(find.text('Další úloha'), findsNothing);
-      expect(jsonDecode(saved.values.single!)['step'], 1);
-      await tap(tester, find.byKey(const Key('reason-neuter')));
-      expect(find.text('Další úloha'), findsNothing);
+      expect(jsonDecode(saved.values.single!)['queue'][0]['step'], 1);
       await reopen(tester);
       expect(find.text('2/2 · Zdůvodni pravopis'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
@@ -100,11 +102,11 @@ void main() {
       await tap(tester, find.byKey(const Key('reason-feminine')));
       expect(find.text('Správně! Písmeno i zdůvodnění.'), findsOneWidget);
       expect(find.text(item['data']['explanation'] as String), findsOneWidget);
-      expect(saved.values.single, isNull);
+      expect(jsonDecode(saved.values.single!)['completed'], 1);
       await tap(tester, find.text('Další úloha'));
       expect(
-        jsonDecode(saved.values.single!)['exerciseId'],
-        isNot(jsonDecode(original)['exerciseId']),
+        jsonDecode(saved.values.single!)['queue'][0]['exerciseId'],
+        isNot(jsonDecode(original)['queue'][0]['exerciseId']),
       );
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -205,8 +207,6 @@ void main() {
       expect(sent[0], sent[1]);
       await reopen(tester);
       expect(find.text('2/2 · Zdůvodni pravopis'), findsOneWidget);
-      await tap(tester, find.byKey(const Key('reason-neuter')));
-      expect(find.text('Další úloha'), findsNothing);
       await tap(tester, find.byKey(const Key('reason-feminine')));
       expect(find.text('Další úloha'), findsOneWidget);
       expect(progress.goals!.math, 0);

@@ -93,10 +93,6 @@ void main() {
         expect(saved['3.math'], original);
         expect(textAt(tester, 'problem'), '8 : 2 =');
       }
-      await key(tester, '9');
-      await submit(tester);
-      await reopen(tester);
-      expect(saved['3.math'], original);
       await key(tester, '4');
       await submit(tester);
       expect(textAt(tester, 'score'), 'Správně: 0');
@@ -110,11 +106,11 @@ void main() {
       await key(tester, '6');
       await submit(tester);
       expect(textAt(tester, 'score'), 'Správně: 1');
-      expect(saved['3.math'], isNull);
+      expect(jsonDecode(saved['3.math']!)['completed'], 1);
       await submit(tester);
       expect(
-        jsonDecode(saved['3.math']!)['exerciseId'],
-        isNot(jsonDecode(original!)['exerciseId']),
+        jsonDecode(saved['3.math']!)['queue'][0]['exerciseId'],
+        isNot(jsonDecode(original!)['queue'][0]['exerciseId']),
       );
       await tester.pumpWidget(const SizedBox());
       progress.dispose();

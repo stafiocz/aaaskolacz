@@ -1,9 +1,7 @@
 import '../tool/vocabulary_seed.dart';
-import 'dart:math';
 
 import 'package:aaaskola/vocabulary.dart';
 import '../tool/vocabulary_grade5_seed.dart';
-import 'package:aaaskola/vocabulary_practice.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 VocabularyEntry entry(String english) =>
@@ -221,17 +219,4 @@ void main() {
       expect(entry('Slovenian').accepts('Slovak'), isFalse);
     },
   );
-
-  test('grade 5 rounds cover only its own deck before repeating', () {
-    final deck = VocabularyDeck(entries: vocabularyGrade5, random: Random(3));
-    final seen = <VocabularyEntry>[];
-    while (seen.length < vocabularyGrade5.length) {
-      final round = deck.nextRound();
-      expect(round.length, inInclusiveRange(1, 15));
-      expect(round.toSet().intersection(seen.toSet()), isEmpty);
-      seen.addAll(round);
-    }
-    expect(seen, unorderedEquals(vocabularyGrade5));
-    expect(deck.nextRound(), hasLength(15));
-  });
 }

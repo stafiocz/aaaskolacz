@@ -238,13 +238,13 @@ async function importTransaction(content, check = false) {
   } finally { client.release(); }
 }
 async function mathExercise(session, grade = 5) {
-  const response = await post('/api/math/exercise', session, { grade, subject: 'math' });
+  const response = await post('/api/math/exercise', session, { grade, subject: 'math', newRound: true });
   assert.equal(response.status, 200);
   return response.json();
 }
 async function solveMath(session, exercise) {
   const response = await post('/api/math/answer', session, {
-    id: randomUUID(), exerciseId: exercise.exerciseId, step: exercise.step, answer: exercise.problem.answer,
+    id: randomUUID(), exerciseId: exercise.exerciseId, step: exercise.step, revision: exercise.revision, answer: exercise.problem.answer,
   });
   assert.equal(response.status, 200);
   return response.json();
@@ -321,18 +321,21 @@ test('unfinished math survives navigation, concurrent tabs, logout, migration an
       id: randomUUID(), exerciseId: first.exerciseId, step: first.step,
       answer: first.problem.answer === 0 ? 1 : 0,
     });
-    assert.deepEqual(await wrong.json(), { correct: false, completed: false });
-    assert.deepEqual(await mathExercise(alice, grade), first);
+    const result = await wrong.json();
+    assert.equal(result.correct, false);
+    assert.equal(result.progress.total, 16);
+    const next = await mathExercise(alice, grade);
+    assert.notEqual(next.exerciseId, first.exerciseId);
     await migrate(pool);
     await post('/api/logout', alice);
     const again = await signIn();
-    assert.deepEqual(await mathExercise(again, grade), first);
+    assert.deepEqual(await mathExercise(again, grade), next);
     const bob = await signIn('bob');
     assert.notEqual((await mathExercise(bob, grade)).exerciseId, first.exerciseId);
     alice.cookie = again.cookie;
     alice.csrf = again.csrf;
   }
-  assert.equal((await pool.query('SELECT count(*)::int n FROM exercises WHERE user_id=$1', [alice.user.id])).rows[0].n, 2);
+  assert.equal((await pool.query('SELECT count(*)::int n FROM exercises WHERE user_id=$1', [alice.user.id])).rows[0].n, 4);
   assert.equal((await dailyGoals(pool, alice.user.id)).math, 0);
 });
 
@@ -348,7 +351,7 @@ test('chain resumes at the unfinished step; concurrent answer retries count once
   const before = (await dailyGoals(pool, session.user.id)).math;
   const firstAnswer = { id: randomUUID(), exerciseId: chain.exerciseId, step: 0, answer: chain.problem.answer };
   const replies = await Promise.all(Array.from({ length: 5 }, () => post('/api/math/answer', session, firstAnswer)));
-  for (const reply of replies) assert.deepEqual(await reply.json(), { correct: true, completed: false });
+  for (const reply of replies) assert.deepEqual(await reply.json(), { correct: true, completed: false, progress: { ...chain.progress, started: true } });
   const second = await mathExercise(session);
   assert.equal(second.exerciseId, chain.exerciseId);
   assert.equal(second.step, 1);
@@ -357,10 +360,10 @@ test('chain resumes at the unfinished step; concurrent answer retries count once
   assert.equal((await post('/api/math/answer', session, { ...firstAnswer, id: randomUUID() })).status, 409);
   assert.equal((await post('/api/math/answer', session, { ...firstAnswer, answer: firstAnswer.answer + 1 })).status, 409);
   const lastAnswer = { id: randomUUID(), exerciseId: chain.exerciseId, step: 1, answer: second.problem.answer };
-  assert.deepEqual(await (await post('/api/math/answer', session, lastAnswer)).json(), { correct: true, completed: true });
+  assert.deepEqual(await (await post('/api/math/answer', session, lastAnswer)).json(), { correct: true, completed: true, progress: { ...chain.progress, completed: chain.progress.completed + 1, started: true } });
   const next = await mathExercise(session);
   assert.notEqual(next.exerciseId, chain.exerciseId);
-  assert.deepEqual(await (await post('/api/math/answer', session, lastAnswer)).json(), { correct: true, completed: true });
+  assert.deepEqual(await (await post('/api/math/answer', session, lastAnswer)).json(), { correct: true, completed: true, progress: { ...chain.progress, completed: chain.progress.completed + 1, started: true } });
   assert.deepEqual(await mathExercise(session), next);
   assert.equal((await dailyGoals(pool, session.user.id)).math, before + 1);
   assert.equal((await pool.query('SELECT count(*)::int n FROM attempts WHERE exercise_id=$1', [chain.exerciseId])).rows[0].n, 2);
@@ -381,8 +384,10 @@ test('assigned math checks answers on the server and rejects forged completion, 
   assert.equal((await post('/api/math/exercise', session, { grade: '3', subject: 'math' })).status, 400);
   assert.equal((await post('/api/attempts', session, attempt({ exerciseId: exercise.exerciseId, grade: 3, itemId: exercise.itemId }))).status, 409);
   const wrong = await post('/api/math/answer', session, { ...payload, answer: exercise.problem.answer + 1, correct: true, completed: true });
-  assert.deepEqual(await wrong.json(), { correct: false, completed: false });
-  assert.deepEqual(await mathExercise(session, 3), exercise);
+  const result = await wrong.json();
+  assert.equal(result.correct, false);
+  assert.equal(result.progress.total, 16);
+  assert.notEqual((await mathExercise(session, 3)).exerciseId, exercise.exerciseId);
 });
 
 test('server math selection keeps a balanced mix and does not repeat items before exhausting a group', async () => {
@@ -430,33 +435,26 @@ test('Czech requires correct letter and reason, persists across tabs and login, 
   const tabs = await Promise.all(Array.from({ length: 5 }, () => spellingExercise(session)));
   for (const tab of tabs) assert.deepEqual(tab, first);
   const payload = { id: randomUUID(), exerciseId: first.exerciseId, step: 0, answer: first.problem.letter };
-  const wrongLetter = { ...payload, id: randomUUID(), answer: first.problem.letter === 'i' ? 'y' : 'i', correct: true, completed: true };
-  assert.deepEqual(await (await post('/api/spelling/answer', session, wrongLetter)).json(), { correct: false, completed: false });
-  assert.deepEqual(await spellingExercise(session), first);
   assert.equal((await post('/api/spelling/answer', session, { ...payload, step: 1, answer: first.problem.reason })).status, 409);
   const responses = await Promise.all(Array.from({ length: 5 }, () => post('/api/spelling/answer', session, payload)));
-  for (const response of responses) assert.deepEqual(await response.json(), { correct: true, completed: false });
+  for (const response of responses) assert.deepEqual(await response.json(), { correct: true, completed: false, progress: { ...first.progress, started: true } });
   const again = await signIn();
   await migrate(pool);
   const second = await spellingExercise(again);
-  assert.deepEqual(second, { ...first, step: 1 });
-  const wrongReason = first.problem.reasons.find(r => r.id !== first.problem.reason).id;
-  assert.deepEqual(await (await post('/api/spelling/answer', again, { ...payload, id: randomUUID(), step: 1, answer: wrongReason })).json(),
-    { correct: false, completed: false });
-  assert.deepEqual(await spellingExercise(again), second);
+  assert.deepEqual(second, { ...first, step: 1, progress: { ...first.progress, started: true } });
   assert.equal((await post('/api/spelling/answer', again, { ...payload, id: randomUUID() })).status, 409);
-  assert.equal((await post('/api/spelling/answer', again, { ...payload, answer: wrongLetter.answer })).status, 409);
+  assert.equal((await post('/api/spelling/answer', again, { ...payload, answer: first.problem.letter === 'i' ? 'y' : 'i' })).status, 409);
   const last = { ...payload, id: randomUUID(), step: 1, answer: first.problem.reason };
-  assert.deepEqual(await (await post('/api/spelling/answer', again, last)).json(), { correct: true, completed: true });
+  assert.deepEqual(await (await post('/api/spelling/answer', again, last)).json(), { correct: true, completed: true, progress: { ...first.progress, completed: 1, started: true } });
   const next = await spellingExercise(again);
   assert.notEqual(next.exerciseId, first.exerciseId);
   assert.notEqual(next.itemId, first.itemId);
-  assert.deepEqual(await (await post('/api/spelling/answer', again, last)).json(), { correct: true, completed: true });
+  assert.deepEqual(await (await post('/api/spelling/answer', again, last)).json(), { correct: true, completed: true, progress: { ...first.progress, completed: 1, started: true } });
   assert.deepEqual(await spellingExercise(again), next);
   const day = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
   const [row] = await stats(again, day, day);
   assert.equal(row.subject, 'czech'); assert.equal(row.grade, 7);
-  assert.equal(row.practiced, 1); assert.equal(row.correct, 2); assert.equal(row.incorrect, 2); assert.equal(row.completed, 1);
+  assert.equal(row.practiced, 1); assert.equal(row.correct, 2); assert.equal(row.incorrect, 0); assert.equal(row.completed, 1);
   const goals = await dailyGoals(pool, session.user.id);
   assert.equal(goals.math, 0); assert.equal(goals.vocabulary, 0);
 });
@@ -479,8 +477,126 @@ test('Czech rejects forged completion, another account, invalid steps and CSRF; 
   try {
     await pool.query("UPDATE practice_items SET active=false, data=jsonb_set(data, '{letter}', '\"a\"'::jsonb) WHERE id=$1", [first.itemId]);
     assert.deepEqual(await spellingExercise(alice), first);
-    assert.deepEqual(await (await post('/api/spelling/answer', alice, payload)).json(), { correct: true, completed: false });
+    assert.deepEqual(await (await post('/api/spelling/answer', alice, payload)).json(), { correct: true, completed: false, progress: { ...first.progress, started: true } });
   } finally {
     await pool.query('UPDATE practice_items SET active=$2,data=$3 WHERE id=$1', [original.id, original.active, original.data]);
   }
+});
+
+for (const [kind, grade, subject] of [['math', 3, 'math'], ['spelling', 7, 'czech'], ['vocabulary', 5, 'english']]) {
+  test(`${kind}: each error adds one task, retries after three tasks, and cannot reset the round`, async () => {
+    let session = await signIn();
+    const start = async (newRound = false) => {
+      const response = await post(`/api/${kind}/exercise`, session, { grade, subject, newRound });
+      assert.equal(response.status, 200);
+      return response.json();
+    };
+    const answer = async (task, wrong = false, id = randomUUID()) => {
+      const value = kind === 'math' ? task.problem.answer + Number(wrong) : kind === 'spelling'
+        ? wrong ? (task.step ? task.problem.reasons.find(r => r.id !== task.problem.reason).id : task.problem.letter === 'i' ? 'y' : 'i')
+          : task.problem[task.step ? 'reason' : 'letter']
+        : wrong ? '' : task.problem.english.toUpperCase().replace(/-/g, ' ').replace(/'/g, '’') + '!';
+      const response = await post(`/api/${kind}/answer`, session, {
+        id, exerciseId: task.exerciseId, step: task.step, revision: task.revision, answer: value,
+      });
+      assert.equal(response.status, 200);
+      return response.json();
+    };
+    const solve = async () => {
+      let task = await start();
+      while (!(await answer(task)).completed) task = await start();
+    };
+    let first = await start();
+    assert.equal(first.progress.total, 15);
+    if (kind === 'spelling') { await answer(first); first = await start(); }
+    const wrongId = randomUUID();
+    const retries = await Promise.all(Array.from({ length: 5 }, () => answer(first, true, wrongId)));
+    for (const result of retries) {
+      assert.equal(result.correct, false);
+      assert.equal(result.progress.mistakes, 1);
+      assert.equal(result.progress.total, 16);
+    }
+    const next = await start();
+    assert.notEqual(next.exerciseId, first.exerciseId);
+    await migrate(pool);
+    session = await signIn();
+    assert.deepEqual(await start(true), next);
+    for (let i = 0; i < 3; i++) {
+      const task = await start();
+      assert.notEqual(task.itemId, first.itemId);
+      await solve();
+    }
+    const repeated = await start();
+    assert.equal(repeated.exerciseId, first.exerciseId);
+    assert.equal(repeated.itemId, first.itemId);
+    assert.equal(repeated.revision, 1);
+    assert.equal(repeated.step, 0);
+    const stale = await post(`/api/${kind}/answer`, session, {
+      id: randomUUID(), exerciseId: first.exerciseId, step: 0, revision: 0,
+      answer: kind === 'math' ? first.problem.answer : kind === 'spelling' ? first.problem.letter : first.problem.english,
+    });
+    assert.equal(stale.status, 409);
+    const twice = await answer(repeated, true);
+    assert.equal(twice.progress.total, 17);
+    assert.equal(twice.progress.mistakes, 2);
+    for (let i = 0; i < 3; i++) await solve();
+    assert.equal((await start()).exerciseId, first.exerciseId);
+    await solve();
+    while ((await start()).progress.completed < 16) await solve();
+    const last = await start();
+    const lastError = await answer(last, true);
+    assert.equal(lastError.progress.total, 18);
+    assert.equal(lastError.progress.mistakes, 3);
+    assert.equal(lastError.progress.finished, false);
+    assert.notEqual((await start()).exerciseId, last.exerciseId);
+    await solve();
+    assert.equal((await start()).exerciseId, last.exerciseId);
+    await solve();
+    const finished = await start();
+    assert.deepEqual(finished.progress, { total: 18, completed: 18, mistakes: 3, finished: true, started: true });
+    assert.equal((await answer(first, true, wrongId)).progress.total, 16);
+    assert.deepEqual(await start(), finished);
+    const day = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
+    const [row] = await stats(session, day, day);
+    assert.equal(row.incorrect, 3);
+    assert.equal(row.completed, 18);
+    const goals = await dailyGoals(pool, session.user.id);
+    assert.equal(goals.math, kind === 'math' ? 18 : 0);
+    assert.equal(goals.vocabulary, kind === 'vocabulary' ? 18 : 0);
+    const fresh = await start(true);
+    assert.equal(fresh.progress.total, 15);
+    assert.equal(fresh.progress.mistakes, 0);
+  });
+}
+
+test('vocabulary assignment skips words learned today and resumes server-owned work', async () => {
+  const session = await signIn();
+  const { rows: learned } = await pool.query("SELECT id FROM practice_items WHERE grade=5 AND subject='english' AND active ORDER BY id LIMIT 10");
+  for (const item of learned) {
+    assert.equal((await post('/api/attempts', session, attempt({ grade: 5, subject: 'english', itemId: item.id,
+      occurredAt: new Date().toISOString() }))).status, 201);
+  }
+  const response = await post('/api/vocabulary/exercise', session, { grade: 5, subject: 'english' });
+  assert.equal(response.status, 200);
+  const exercise = await response.json();
+  assert.equal(exercise.cards.length, 15);
+  assert.ok(exercise.cards.every(card => !learned.some(item => item.id === card.id)));
+  assert.equal(new Set(exercise.cards.map(card => card.id)).size, 15);
+  assert.equal((await post('/api/attempts', session, attempt({ exerciseId: exercise.exerciseId,
+    grade: 5, subject: 'english', itemId: exercise.itemId }))).status, 409);
+});
+
+test('pre-round unfinished chain keeps its snapshot and current step during migration', async () => {
+  const session = await signIn();
+  const { rows: [item] } = await pool.query("SELECT id,data FROM practice_items WHERE grade=5 AND subject='math' AND data ? 'nextStep' LIMIT 1");
+  const id = randomUUID();
+  await pool.query(`INSERT INTO exercises(user_id,id,grade,subject,practice_item_id,math_problem,math_step)
+    VALUES ($1,$2,5,'math',$3,$4,1)`, [session.user.id, id, item.id, item.data]);
+  await migrate(pool);
+  const task = await mathExercise(session);
+  assert.equal(task.exerciseId, id);
+  assert.equal(task.step, 1);
+  assert.deepEqual(task.problem, item.data.nextStep);
+  assert.equal(task.progress.total, 15);
+  assert.equal((await solveMath(session, task)).completed, true);
 });

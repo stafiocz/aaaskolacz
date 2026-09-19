@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:aaaskola/progress.dart';
 import 'package:aaaskola/progress_widgets.dart';
-import 'package:aaaskola/vocabulary.dart';
-import 'package:aaaskola/vocabulary_practice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -180,27 +178,6 @@ void main() {
         findsOneWidget,
       );
       await tester.pumpWidget(const SizedBox());
-      progress.dispose();
-    },
-  );
-
-  test(
-    'a fresh vocabulary visit skips today’s learned IDs and still permits extra practice',
-    () {
-      final words = List.generate(
-        20,
-        (i) => VocabularyEntry('word$i', 'slovo$i', 'test', 1, id: 'word-$i'),
-      );
-      final learned = words.take(5).map((w) => w.id!).toSet();
-      final round = VocabularyDeck(entries: words).nextRound(learned: learned);
-      expect(round, hasLength(15));
-      expect(round.every((word) => !learned.contains(word.id)), true);
-      expect(
-        VocabularyDeck(
-          entries: words,
-        ).nextRound(learned: words.map((w) => w.id!).toSet()),
-        hasLength(15),
-      );
       progress.dispose();
     },
   );

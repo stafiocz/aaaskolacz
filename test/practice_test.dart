@@ -97,19 +97,26 @@ void main() {
   );
 
   testWidgets(
-    'incorrect answer can be replaced, success unlocks next problem',
+    'wrong answer is locked, adds a task, and returns after three other tasks',
     (tester) async {
       await openMath(tester);
       final original = textAt(tester, 'problem');
       await key(tester, result(tester) == 0 ? '1' : '0');
       await submit(tester);
-      expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
+      expect(find.textContaining('Správná odpověď:'), findsOneWidget);
       expect(textAt(tester, 'problem'), original);
       expect(textAt(tester, 'score'), contains('0'));
 
+      expect(find.text('TEST · Hotovo 0 / 16'), findsOneWidget);
+      await submit(tester);
+      for (var i = 0; i < 3; i++) {
+        await answerCorrectly(tester);
+        await submit(tester);
+      }
+      expect(textAt(tester, 'problem'), original);
       await answerCorrectly(tester);
       expect(find.text('Výborně! To je správně.'), findsOneWidget);
-      expect(textAt(tester, 'score'), contains('1'));
+      expect(textAt(tester, 'score'), contains('4'));
       expect(find.text('Další příklad'), findsOneWidget);
       expect(
         tester
@@ -121,7 +128,7 @@ void main() {
       await submit(tester);
       expect(textAt(tester, 'problem'), isNot(original));
       expect(textAt(tester, 'answer'), '?');
-      expect(textAt(tester, 'score'), contains('1'));
+      expect(textAt(tester, 'score'), contains('4'));
     },
   );
 
@@ -130,14 +137,18 @@ void main() {
     (tester) async {
       await openMath(tester);
       final modes = <PracticeMode>{};
-      for (var count = 1; count <= grade3Modes.length * 5; count++) {
+      for (var count = 1; count <= 15; count++) {
         final original = textAt(tester, 'problem');
         modes.add(modeAt(tester));
         await answerCorrectly(tester);
         expect(textAt(tester, 'score'), 'Správně: $count');
         await submit(tester);
-        expect(textAt(tester, 'problem'), isNot(original));
-        expect(textAt(tester, 'answer'), '?');
+        if (count == 15) {
+          expect(find.text('Kolo je hotové!'), findsOneWidget);
+        } else {
+          expect(textAt(tester, 'problem'), isNot(original));
+          expect(textAt(tester, 'answer'), '?');
+        }
         if (count % grade3Modes.length == 0) {
           expect(modes, unorderedEquals(grade3Modes));
           modes.clear();
@@ -168,7 +179,7 @@ void main() {
     );
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
-    expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
+    expect(find.textContaining('Správná odpověď:'), findsOneWidget);
   });
 
   testWidgets('mixed problems check answers and reset feedback automatically', (
@@ -185,10 +196,6 @@ void main() {
       final suffix = mode.hasMissingNumber
           ? textAt(tester, 'problem-suffix')
           : '';
-      await key(tester, result(tester) == 0 ? '1' : '0');
-      await submit(tester);
-      expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
-      expect(textAt(tester, 'problem'), original);
       await answerCorrectly(tester);
       expect(find.text('Výborně! To je správně.'), findsOneWidget);
       expect(textAt(tester, 'score'), 'Správně: ${++count}');

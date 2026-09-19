@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'school_widgets.dart';
 import 'vocabulary.dart';
-import 'vocabulary_practice.dart';
+import 'test_session.dart';
+import 'test_progress.dart';
 import 'progress.dart';
 import 'progress_widgets.dart';
 
@@ -33,15 +34,30 @@ class EnglishPage extends StatefulWidget {
 }
 
 class _EnglishPageState extends State<EnglishPage> {
-  late final _deck = VocabularyDeck(entries: widget.entries);
+  late TestSession _test;
+  ProgressController? _progress;
+  String? _owner;
+  int _version = 0;
+  bool _busy = false;
+  String? _error;
+  Map<String, dynamic>? _exercise;
+  Map<String, dynamic>? _request;
+  Map<String, dynamic> _roundProgress = {
+    'total': 15,
+    'completed': 0,
+    'mistakes': 0,
+  };
+  bool? _correct;
+  VocabularyEntry get _word => VocabularyEntry.fromJson(
+    _exercise!['problem'] as Map<String, dynamic>,
+    id: _exercise!['itemId'] as String?,
+  );
   final _answer = TextEditingController();
   final _answerFocus = FocusNode();
   _Stage _stage = _Stage.intro;
   List<VocabularyEntry> _round = [];
-  late VocabularyQuiz _quiz;
   int _card = 0;
   bool _revealed = false;
-  Map<VocabularyEntry, String> _exerciseIds = {};
 
   @override
   void dispose() {
@@ -50,45 +66,137 @@ class _EnglishPageState extends State<EnglishPage> {
     super.dispose();
   }
 
-  void _start({bool study = true}) {
-    setState(() {
-      _round = _deck.nextRound(
-        learned: ProgressScope.of(context)?.goals?.wordIds ?? {},
-      );
-      _exerciseIds = {for (final word in _round) word: newExerciseId()};
-      _card = 0;
-      _revealed = false;
-      _quiz = VocabularyQuiz(_round);
-      _answer.clear();
-      _stage = study ? _Stage.cards : _Stage.quiz;
-    });
-  }
-
-  void _check({bool reveal = false}) {
-    if (_quiz.correct != null || (!reveal && _answer.text.trim().isEmpty)) {
-      return;
-    }
-    _answerFocus.unfocus();
-    setState(() => _quiz.check(reveal ? '' : _answer.text));
-    ProgressScope.of(context)?.record(
-      exerciseId: _exerciseIds[_quiz.current]!,
-      itemId: _quiz.current.id,
-      subject: widget.subject,
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _progress = ProgressScope.of(context);
+    if (_progress != null && !_progress!.sessionResolved) return;
+    final owner = _progress?.user?['id'] as String? ?? 'guest';
+    if (_owner == owner) return;
+    _owner = owner;
+    _version++;
+    _stage = _Stage.intro;
+    _request = null;
+    _busy = false;
+    _error = null;
+    _test = TestSession(
+      progress: _progress,
+      kind: 'vocabulary',
       grade: widget.grade,
-      correct: _quiz.correct!,
-      completed: _quiz.correct!,
+      subject: widget.subject,
+      items: [
+        for (final word in widget.entries)
+          {
+            'id': word.id ?? word.english,
+            'data': {
+              'english': word.english,
+              'czech': word.czech,
+              'topic': word.topic,
+              'page': word.page,
+              'alternatives': word.alternatives,
+            },
+          },
+      ],
     );
   }
 
-  void _next() {
+  Future<void> _start({bool study = true}) =>
+      _load(study: study, newRound: _stage == _Stage.done);
+
+  Future<void> _load({bool study = false, bool newRound = false}) async {
+    if (_owner == null || _busy) return;
+    final version = ++_version;
     setState(() {
-      _quiz.next();
-      _answer.clear();
-      if (_quiz.isFinished) _stage = _Stage.done;
+      _busy = true;
+      _error = null;
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _stage == _Stage.quiz) _answerFocus.requestFocus();
+    try {
+      final exercise = await _test.load(newRound: newRound);
+      if (!mounted || version != _version) return;
+      setState(() {
+        _exercise = exercise;
+        _roundProgress = exercise['progress'] as Map<String, dynamic>;
+        _correct = null;
+        _request = null;
+        _answer.clear();
+        if (_roundProgress['finished'] == true) {
+          _stage = _Stage.done;
+        } else {
+          final cards = [
+            for (final item in exercise['cards'] as List)
+              VocabularyEntry.fromJson(item['data'], id: item['id']),
+          ];
+          if (_stage == _Stage.intro || newRound) {
+            _round = cards;
+          } else {
+            for (final card in cards) {
+              if (!_round.any((word) => word.id == card.id)) _round.add(card);
+            }
+          }
+          _card = 0;
+          _revealed = false;
+          _stage = study && _roundProgress['started'] != true
+              ? _Stage.cards
+              : _Stage.quiz;
+        }
+      });
+    } catch (_) {
+      if (mounted && version == _version) {
+        setState(() => _error = 'Kolo se nepodařilo načíst. Zkus to znovu.');
+      }
+    } finally {
+      if (mounted && version == _version) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _check({bool reveal = false}) async {
+    if (_busy ||
+        _correct != null ||
+        (!reveal && _request == null && _answer.text.trim().isEmpty)) {
+      return;
+    }
+    final version = _version;
+    _answerFocus.unfocus();
+    setState(() {
+      _busy = true;
+      _error = null;
     });
+    try {
+      _request ??= {
+        'id': newExerciseId(),
+        'exerciseId': _exercise!['exerciseId'],
+        'step': 0,
+        'revision': _exercise!['revision'] ?? 0,
+        'answer': reveal ? '' : _answer.text,
+      };
+      final result = await _test.answer(_request!);
+      if (!mounted || version != _version) return;
+      setState(() {
+        _correct = result['correct'] as bool;
+        _roundProgress = result['progress'] as Map<String, dynamic>;
+        _request = null;
+      });
+    } on MathExerciseChanged {
+      if (!mounted || version != _version) return;
+      setState(() {
+        _request = null;
+        _stage = _Stage.intro;
+        _error = 'Kolo pokročilo v jiné kartě. Načti aktuální zadání.';
+      });
+    } catch (_) {
+      if (mounted && version == _version) {
+        setState(
+          () => _error = 'Odpověď se nepodařilo ověřit. Zkus odeslání znovu.',
+        );
+      }
+    } finally {
+      if (mounted && version == _version) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _next() async {
+    await _load();
+    if (mounted && _stage == _Stage.quiz) _answerFocus.requestFocus();
   }
 
   @override
@@ -97,6 +205,21 @@ class _EnglishPageState extends State<EnglishPage> {
         '${widget.subjectName} · ${widget.gradeName ?? '${widget.grade}. třída'}',
     children: [
       const DailyGoalsCard(kind: 'vocabulary'),
+      if (_owner == null && _progress?.ready == true) ...[
+        const Text('Účet se nepodařilo načíst. Zkus to znovu.'),
+        FilledButton(
+          onPressed: () => _progress!.load(),
+          child: const Text('Načíst účet'),
+        ),
+      ],
+      if (_busy) const Center(child: CircularProgressIndicator()),
+      if (_error != null) ...[
+        Text(_error!),
+        FilledButton(
+          onPressed: _busy ? null : () => _request != null ? _check() : _load(),
+          child: const Text('Zkusit znovu'),
+        ),
+      ],
       ...switch (_stage) {
         _Stage.intro => _intro(),
         _Stage.cards => _cards(),
@@ -124,19 +247,19 @@ class _EnglishPageState extends State<EnglishPage> {
       ),
       const SizedBox(height: 16),
       Text(
-        '1. Projdi kartičky a zkus si vybavit překlad.\n\n2. Napiš ${widget.answerLanguage} české slovíčko nebo frázi.\n\n3. Co se nepovede, vrátí se na konci kola.',
+        '1. Projdi kartičky a zkus si vybavit překlad.\n\n2. Napiš ${widget.answerLanguage} české slovíčko nebo frázi.\n\n3. Chybné slovíčko se vrátí po třech dalších zadáních. Každá chyba přidá jedno další slovíčko.',
         style: TextStyle(fontSize: 16, height: 1.5),
       ),
     ]),
     const SizedBox(height: 20),
     FilledButton.icon(
-      onPressed: () => _start(),
+      onPressed: _busy || _owner == null ? null : () => _start(),
       icon: const Icon(Icons.style_outlined),
       label: const Text('Učit se slovíčka'),
     ),
     const SizedBox(height: 10),
     OutlinedButton(
-      onPressed: () => _start(study: false),
+      onPressed: _busy || _owner == null ? null : () => _start(study: false),
       child: const Text('Rovnou se vyzkoušet'),
     ),
     const SizedBox(height: 18),
@@ -213,8 +336,6 @@ class _EnglishPageState extends State<EnglishPage> {
             _card++;
             _revealed = false;
           } else {
-            _round.shuffle();
-            _quiz = VocabularyQuiz(_round);
             _stage = _Stage.quiz;
           }
         }),
@@ -230,28 +351,35 @@ class _EnglishPageState extends State<EnglishPage> {
   }
 
   List<Widget> _question() {
-    final word = _quiz.current;
-    final checked = _quiz.correct != null;
+    final word = _word;
+    final checked = _correct != null;
     return [
       const SaveStatus(),
       Text(
-        'ZKOUŠENÍ · Zvládnuto ${_quiz.completed} / ${_quiz.total}',
+        'ZKOUŠENÍ · Zvládnuto ${_roundProgress['completed']} / ${_roundProgress['total']}',
         key: const ValueKey('vocabulary-progress'),
         style: const TextStyle(
           fontWeight: FontWeight.w700,
           color: Color(0xFF226552),
         ),
       ),
+      Text(
+        'Chyby: ${_roundProgress['mistakes']} · Slovíčka navíc: ${_roundProgress['mistakes']}',
+      ),
       const SizedBox(height: 12),
       LinearProgressIndicator(
-        value: _quiz.completed / _quiz.total,
+        value:
+            (_roundProgress['completed'] as int) /
+            (_roundProgress['total'] as int),
         minHeight: 6,
         borderRadius: BorderRadius.circular(6),
       ),
       const SizedBox(height: 20),
       _panel([
         Text(
-          _quiz.isRetry ? 'Ještě jednou z paměti' : word.topic,
+          (_exercise!['revision'] as int? ?? 0) > 0
+              ? 'Ještě jednou z paměti'
+              : word.topic,
           style: const TextStyle(color: Color(0xFF6E8177)),
         ),
         const SizedBox(height: 18),
@@ -270,7 +398,7 @@ class _EnglishPageState extends State<EnglishPage> {
           key: const ValueKey('vocabulary-answer'),
           controller: _answer,
           focusNode: _answerFocus,
-          readOnly: checked,
+          readOnly: checked || _busy || _request != null,
           autocorrect: false,
           enableSuggestions: false,
           keyboardType: TextInputType.text,
@@ -307,11 +435,11 @@ class _EnglishPageState extends State<EnglishPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _quiz.correct! ? 'Správně!' : 'Tohle si ještě zopakujeme.',
+                  _correct! ? 'Správně!' : 'Tohle si ještě zopakujeme.',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: _quiz.correct!
+                    color: _correct!
                         ? const Color(0xFF226552)
                         : const Color(0xFFAD552B),
                   ),
@@ -325,10 +453,10 @@ class _EnglishPageState extends State<EnglishPage> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (!_quiz.correct!) ...[
+                if (!_correct!) ...[
                   const SizedBox(height: 8),
                   const Text(
-                    'Přečti si správnou odpověď. Slovíčko se vrátí, až projdeš ostatní.',
+                    'Přečti si správnou odpověď. $retryFeedback',
                     style: TextStyle(height: 1.5),
                   ),
                 ],
@@ -339,7 +467,9 @@ class _EnglishPageState extends State<EnglishPage> {
       const SizedBox(height: 20),
       FilledButton(
         key: const ValueKey('vocabulary-submit'),
-        onPressed: checked
+        onPressed: _busy || _request != null
+            ? null
+            : checked
             ? _next
             : _answer.text.trim().isEmpty
             ? null
@@ -349,7 +479,9 @@ class _EnglishPageState extends State<EnglishPage> {
       if (!checked) ...[
         const SizedBox(height: 8),
         TextButton(
-          onPressed: () => _check(reveal: true),
+          onPressed: _busy || _request != null
+              ? null
+              : () => _check(reveal: true),
           child: const Text('Nevím · ukázat odpověď'),
         ),
       ],
@@ -370,7 +502,7 @@ class _EnglishPageState extends State<EnglishPage> {
     ),
     const SizedBox(height: 12),
     Text(
-      'Na první pokus: ${_quiz.firstTryCorrect} z ${_quiz.total}\nTeď už jsi správně napsal/a všech ${_quiz.total}.',
+      'Zvládnuto: ${_roundProgress['completed']} z ${_roundProgress['total']}\nChyby: ${_roundProgress['mistakes']} · Slovíčka navíc: ${_roundProgress['mistakes']}',
       key: const ValueKey('vocabulary-result'),
       textAlign: TextAlign.center,
       style: const TextStyle(fontSize: 18, height: 1.6),
@@ -388,12 +520,12 @@ class _EnglishPageState extends State<EnglishPage> {
     ]),
     const SizedBox(height: 24),
     FilledButton(
-      onPressed: () => _start(),
+      onPressed: _busy || _owner == null ? null : () => _start(),
       child: const Text('Další kolo s kartičkami'),
     ),
     const SizedBox(height: 10),
     OutlinedButton(
-      onPressed: () => _start(study: false),
+      onPressed: _busy || _owner == null ? null : () => _start(study: false),
       child: const Text('Další kolo zkoušení'),
     ),
     const SizedBox(height: 10),

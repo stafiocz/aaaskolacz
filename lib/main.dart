@@ -6,6 +6,8 @@ import 'school_pages.dart';
 import 'catalog.dart';
 import 'progress.dart';
 import 'progress_widgets.dart';
+import 'test_session.dart';
+import 'test_progress.dart';
 
 void main() => runApp(const AaaSkolaApp());
 
@@ -100,7 +102,9 @@ class PracticePage extends StatefulWidget {
 }
 
 class _PracticePageState extends State<PracticePage> {
-  late final _practice = MixedPractice(problems: widget.problems);
+  late TestSession _test;
+  Map<String, dynamic>? _roundProgress;
+  int _revision = 0;
   final _keyboardFocus = FocusNode();
   late MathProblem _problem;
   String _answer = '';
@@ -116,7 +120,6 @@ class _PracticePageState extends State<PracticePage> {
   bool _busy = false;
   String? _mathError;
   Map<String, dynamic>? _answerRequest;
-  String get _course => '${widget.grade}.${widget.subject}';
 
   @override
   void didChangeDependencies() {
@@ -126,13 +129,24 @@ class _PracticePageState extends State<PracticePage> {
     final owner = _progress?.user?['id'] as String? ?? 'guest';
     if (_owner == owner) return;
     _owner = owner;
+    _test = TestSession(
+      progress: _progress,
+      kind: 'math',
+      grade: widget.grade,
+      subject: widget.subject,
+      items: [
+        for (var i = 0; i < widget.problems.length; i++)
+          {'id': 'math-$i', 'data': widget.problems[i].toJson()},
+      ],
+    );
+    _roundProgress = null;
     _loaded = false;
     _correctCount = 0;
     _answerRequest = null;
     _loadProblem();
   }
 
-  Future<void> _loadProblem() async {
+  Future<void> _loadProblem({bool newRound = false}) async {
     final version = ++_loadVersion;
     final owner = _owner;
     setState(() {
@@ -140,30 +154,19 @@ class _PracticePageState extends State<PracticePage> {
       _mathError = null;
     });
     try {
-      Map<String, dynamic>? saved;
-      if (owner != 'guest') {
-        saved = await _progress!.mathRequest('exercise', {
-          'grade': widget.grade,
-          'subject': widget.subject,
-        });
-      } else {
-        saved = _progress?.guestMath(_course);
-        if (saved == null) {
-          saved = {
-            'exerciseId': newExerciseId(),
-            'step': 0,
-            'problem': _practice.next().toJson(),
-          };
-          _progress?.saveGuestMath(_course, saved);
-        }
-      }
+      final saved = await _test.load(newRound: newRound);
       if (!mounted || version != _loadVersion || owner != _owner) return;
       setState(() {
-        _problem = MathProblem.fromJson(
-          saved!['problem'] as Map<String, dynamic>,
-        );
-        _exerciseId = saved['exerciseId'] as String;
-        _step = saved['step'] as int;
+        _roundProgress = saved['progress'] as Map<String, dynamic>?;
+        _correctCount = _roundProgress?['completed'] as int? ?? _correctCount;
+        if (_roundProgress?['finished'] != true) {
+          _problem = MathProblem.fromJson(
+            saved['problem'] as Map<String, dynamic>,
+          );
+          _exerciseId = saved['exerciseId'] as String;
+          _step = saved['step'] as int;
+          _revision = saved['revision'] as int? ?? 0;
+        }
         _answer = '';
         _incorrect = false;
         _solved = false;
@@ -191,7 +194,9 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   void _digit(String digit) {
-    if (!_loaded || _busy || _answerRequest != null || _solved) return;
+    if (!_loaded || _busy || _answerRequest != null || _solved || _incorrect) {
+      return;
+    }
     setState(() {
       if (_incorrect || _answer == '0') _answer = '';
       _incorrect = false;
@@ -200,7 +205,9 @@ class _PracticePageState extends State<PracticePage> {
   }
 
   void _erase({bool all = false}) {
-    if (!_loaded || _busy || _answerRequest != null || _solved) return;
+    if (!_loaded || _busy || _answerRequest != null || _solved || _incorrect) {
+      return;
+    }
     setState(() {
       _incorrect = false;
       _answer = all || _answer.isEmpty
@@ -211,18 +218,8 @@ class _PracticePageState extends State<PracticePage> {
 
   Future<void> _submit() async {
     if (!_loaded || _busy) return;
-    if (_solved) {
-      if (_owner != 'guest' || _problem.nextStep == null) {
-        await _loadProblem();
-        return;
-      }
-      setState(() {
-        _problem = _problem.nextStep!;
-        _step++;
-        _answer = '';
-        _incorrect = false;
-        _solved = false;
-      });
+    if (_solved || _incorrect) {
+      await _loadProblem();
     } else if (_answer.isNotEmpty) {
       final owner = _owner;
       final version = _loadVersion;
@@ -231,40 +228,24 @@ class _PracticePageState extends State<PracticePage> {
         _mathError = null;
       });
       try {
-        bool correct;
-        if (owner != 'guest') {
-          _answerRequest ??= {
-            'id': newExerciseId(),
-            'exerciseId': _exerciseId,
-            'step': _step,
-            'answer': int.parse(_answer),
-          };
-          final result = await _progress!.mathRequest(
-            'answer',
-            _answerRequest!,
-          );
-          correct = result['correct'] as bool;
-        } else {
-          correct = int.parse(_answer) == _problem.answer;
-          if (correct) {
-            _progress?.saveGuestMath(
-              _course,
-              _problem.nextStep == null
-                  ? null
-                  : {
-                      'exerciseId': _exerciseId,
-                      'step': _step + 1,
-                      'problem': _problem.nextStep!.toJson(),
-                    },
-            );
-          }
-        }
+        _answerRequest ??= {
+          'id': newExerciseId(),
+          'exerciseId': _exerciseId,
+          'step': _step,
+          'revision': _revision,
+          'answer': int.parse(_answer),
+        };
+        final result = await _test.answer(_answerRequest!);
+        final correct = result['correct'] as bool;
         if (!mounted || version != _loadVersion || owner != _owner) return;
         setState(() {
           _answerRequest = null;
+          _roundProgress =
+              result['progress'] as Map<String, dynamic>? ?? _roundProgress;
           _solved = correct;
           _incorrect = !correct;
           if (_solved && _problem.nextStep == null) _correctCount++;
+          _correctCount = _roundProgress?['completed'] as int? ?? _correctCount;
         });
       } on MathExerciseChanged {
         if (!mounted || version != _loadVersion || owner != _owner) return;
@@ -348,11 +329,28 @@ class _PracticePageState extends State<PracticePage> {
         ),
       );
     }
+    if (_roundProgress?['finished'] == true && !_solved) {
+      return Scaffold(
+        appBar: AppBar(title: Text(widget.subjectName)),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              TestProgress(
+                progress: _roundProgress,
+                onNewRound: _busy ? null : () => _loadProblem(newRound: true),
+              ),
+              if (_mathError != null) Text(_mathError!),
+            ],
+          ),
+        ),
+      );
+    }
     final statusColor = _incorrect ? const Color(0xFFAD552B) : _green;
     final feedback = _solved
         ? 'Výborně! To je správně.'
         : _incorrect
-        ? 'To ještě není ono. Zkus to znovu.'
+        ? 'Správná odpověď: ${formatMathNumber(_problem.answer)}. $retryFeedback'
         : _problem.instruction ?? 'Napiš výsledek a potvrď ho.';
 
     return Scaffold(
@@ -378,6 +376,12 @@ class _PracticePageState extends State<PracticePage> {
                       children: [
                         const SaveStatus(),
                         const DailyGoalsCard(kind: 'math'),
+                        TestProgress(
+                          progress: _roundProgress == null
+                              ? null
+                              : {..._roundProgress!, 'finished': false},
+                          onNewRound: null,
+                        ),
                         if (_mathError != null)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -622,6 +626,7 @@ class _PracticePageState extends State<PracticePage> {
                                         height: compact ? 50 : 62,
                                         onPressed:
                                             _solved ||
+                                                _incorrect ||
                                                 _busy ||
                                                 _answerRequest != null
                                             ? null
@@ -646,7 +651,7 @@ class _PracticePageState extends State<PracticePage> {
                           key: const ValueKey('submit'),
                           onPressed: _answer.isEmpty || _busy ? null : _submit,
                           icon: Icon(
-                            _solved
+                            (_solved || _incorrect)
                                 ? Icons.arrow_forward_rounded
                                 : Icons.check_rounded,
                             size: 23,
@@ -656,6 +661,8 @@ class _PracticePageState extends State<PracticePage> {
                                 ? 'Ověřuji…'
                                 : _answerRequest != null
                                 ? 'Zkusit odeslat znovu'
+                                : _incorrect
+                                ? 'Pokračovat'
                                 : !_solved
                                 ? 'Zkontrolovat'
                                 : _problem.nextStep != null

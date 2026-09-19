@@ -70,35 +70,35 @@ void main() {
     expect(find.text('Angličtina'), findsOneWidget);
   });
 
-  testWidgets(
-    'seven digits, grouping, erasing and incorrect replacement work',
-    (tester) async {
-      await openGrade5(tester);
-      for (final digit in '12345678'.split('')) {
-        await key(tester, digit);
-      }
-      expect(textAt(tester, 'answer'), '1\u00a0234\u00a0567');
-      await key(tester, '⌫');
-      expect(textAt(tester, 'answer'), '123\u00a0456');
-      await key(tester, 'C');
-      await key(tester, '0');
-      await key(tester, '5');
-      expect(textAt(tester, 'answer'), '5');
-      await key(tester, 'C');
-      for (final digit in '9999999'.split('')) {
-        await tester.sendKeyEvent(LogicalKeyboardKey.digit9, character: digit);
-      }
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pumpAndSettle();
-      expect(find.text('To ještě není ono. Zkus to znovu.'), findsOneWidget);
-      await answerCorrectly(tester);
-      final correct = textAt(tester, 'answer');
-      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pump();
-      expect(textAt(tester, 'answer'), correct);
-    },
-  );
+  testWidgets('seven digits, grouping, erasing and delayed correction work', (
+    tester,
+  ) async {
+    await openGrade5(tester);
+    for (final digit in '12345678'.split('')) {
+      await key(tester, digit);
+    }
+    expect(textAt(tester, 'answer'), '1\u00a0234\u00a0567');
+    await key(tester, '⌫');
+    expect(textAt(tester, 'answer'), '123\u00a0456');
+    await key(tester, 'C');
+    await key(tester, '0');
+    await key(tester, '5');
+    expect(textAt(tester, 'answer'), '5');
+    await key(tester, 'C');
+    for (final digit in '9999999'.split('')) {
+      await tester.sendKeyEvent(LogicalKeyboardKey.digit9, character: digit);
+    }
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Správná odpověď:'), findsOneWidget);
+    await submit(tester);
+    await answerCorrectly(tester);
+    final correct = textAt(tester, 'answer');
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    expect(textAt(tester, 'answer'), correct);
+  });
 
   testWidgets(
     'mix includes two-step chains, counts once and shows inverse checks',
@@ -119,10 +119,6 @@ void main() {
           expect(textAt(tester, 'problem'), startsWith(middle));
           expect(find.textContaining('Krok 2 ze 2'), findsOneWidget);
           expect(textAt(tester, 'answer'), '?');
-          await key(tester, solve(textAt(tester, 'problem')) == 0 ? '1' : '0');
-          await submit(tester);
-          expect(textAt(tester, 'score'), 'Správně: $index');
-          expect(find.text('Další příklad'), findsNothing);
           await answerCorrectly(tester);
         }
         if (mode == PracticeMode.largeAddition ||
