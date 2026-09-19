@@ -20,6 +20,17 @@ export function validateItem(data, kind, maxDigits, depth = 0) {
       assert(data[field] == null || text(data[field]), `Neplatné pole ${field}.`);
     }
     if (data.nextStep != null) validateItem(data.nextStep, kind, maxDigits, depth + 1);
+  } else if (kind === 'spelling') {
+    assert(text(data.sentence) && data.sentence.split('_').length === 2, 'Věta musí obsahovat právě jednu mezeru označenou _.');
+    assert(['i', 'í', 'y', 'ý', 'a'].includes(data.letter), 'Neplatné písmeno.');
+    assert(text(data.explanation, 1000) && Array.isArray(data.reasons) && data.reasons.length >= 3 && data.reasons.length <= 6,
+      'Chybí vysvětlení nebo možnosti zdůvodnění.');
+    const ids = new Set();
+    for (const reason of data.reasons) {
+      assert(reason && identifier.test(reason.id) && text(reason.text) && !ids.has(reason.id), 'Neplatné nebo duplicitní zdůvodnění.');
+      ids.add(reason.id);
+    }
+    assert(ids.has(data.reason), 'Správné zdůvodnění není mezi možnostmi.');
   } else {
     assert(kind === 'vocabulary' && text(data.english) && text(data.czech) && text(data.topic, 100), 'Chybí slovíčko, překlad nebo téma.');
     assert(integer(data.page, 0, 9999) && Array.isArray(data.alternatives) &&
@@ -42,7 +53,7 @@ export async function importContent(client, content) {
   for (const subject of content.subjects ?? []) {
     record(subject);
     assert(text(subject.id) && identifier.test(subject.id) && text(subject.slug) && /^[a-z][a-z0-9-]{0,63}$/.test(subject.slug) && text(subject.name, 100) &&
-      ['math', 'vocabulary'].includes(subject.kind), 'Neplatný předmět.');
+      ['math', 'vocabulary', 'spelling'].includes(subject.kind), 'Neplatný předmět.');
     assert(subject.kind !== 'vocabulary' || text(subject.answerLanguage, 100), 'Chybí jazyk odpovědi.');
     const previous = (await client.query('SELECT kind FROM school_subjects WHERE id=$1', [subject.id])).rows[0];
     assert(!previous || previous.kind === subject.kind, 'Typ existujícího předmětu nelze změnit.');

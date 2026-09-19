@@ -296,12 +296,18 @@ class ProgressController extends ChangeNotifier {
   Future<Map<String, dynamic>> mathRequest(
     String action,
     Map<String, dynamic> body,
+  ) => practiceRequest('math', action, body);
+
+  Future<Map<String, dynamic>> practiceRequest(
+    String kind,
+    String action,
+    Map<String, dynamic> body,
   ) async {
     final owner = user?['id'];
     if (owner == null) throw StateError('Sign in required');
     final response = await _client
         .post(
-          _base.resolve('/api/math/$action'),
+          _base.resolve('/api/$kind/$action'),
           headers: {'Content-Type': 'application/json', 'X-CSRF-Token': _csrf!},
           body: jsonEncode(body),
         )
@@ -312,7 +318,7 @@ class ProgressController extends ChangeNotifier {
       throw StateError('Session expired');
     }
     if (response.statusCode == 409) throw const MathExerciseChanged();
-    if (response.statusCode != 200) throw StateError('Math request failed');
+    if (response.statusCode != 200) throw StateError('Practice request failed');
     if (action == 'answer') unawaited(refreshGoals());
     return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }

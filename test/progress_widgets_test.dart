@@ -120,6 +120,17 @@ void main() {
                   'correct': 2,
                   'incorrect': 1,
                 },
+                {
+                  'day': '2026-09-17',
+                  'subject': 'czech',
+                  'subjectName': 'Čeština',
+                  'subjectKind': 'spelling',
+                  'gradeName': '7. třída',
+                  'grade': 7,
+                  'completed': 1,
+                  'correct': 2,
+                  'incorrect': 3,
+                },
               ],
             }),
             200,
@@ -145,6 +156,11 @@ void main() {
       expect(find.text('17. 9. 2026'), findsOneWidget);
       expect(find.text('Matematika · 5. třída'), findsWidgets);
       expect(find.text('Angličtina · 5. třída'), findsWidgets);
+      expect(find.text('Čeština · 7. třída'), findsWidgets);
+      expect(
+        find.textContaining('Dokončeno úloh s odůvodněním: 1'),
+        findsWidgets,
+      );
       expect(find.textContaining('Dokončeno příkladů: 3'), findsWidgets);
       expect(find.textContaining('Správně: 4   ·   Chybně: 2'), findsWidgets);
       expect(find.text('Zatím žádné procvičování.'), findsWidgets);

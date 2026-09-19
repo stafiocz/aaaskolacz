@@ -25,6 +25,16 @@ export async function migrate(pool) {
       ALTER TABLE exercises ADD COLUMN IF NOT EXISTS math_step integer NOT NULL DEFAULT 0;
       ALTER TABLE attempts ADD COLUMN IF NOT EXISTS math_answer integer;
       ALTER TABLE attempts ADD COLUMN IF NOT EXISTS math_step integer`);
+    if (!(await client.query("SELECT 1 FROM content_migrations WHERE version='spelling-v1'")).rowCount) {
+      await client.query(`ALTER TABLE school_subjects DROP CONSTRAINT school_subjects_kind_check;
+        ALTER TABLE school_subjects ADD CONSTRAINT school_subjects_kind_check CHECK (kind IN ('math','vocabulary','spelling'));
+        ALTER TABLE exercises ADD COLUMN spelling_problem jsonb;
+        ALTER TABLE exercises ADD COLUMN spelling_step integer NOT NULL DEFAULT 0;
+        ALTER TABLE attempts ADD COLUMN spelling_answer text;
+        ALTER TABLE attempts ADD COLUMN spelling_step integer`);
+      await importContent(client, JSON.parse(await readFile(new URL('./spelling-seed.json', import.meta.url), 'utf8')));
+      await client.query("INSERT INTO content_migrations(version) VALUES ('spelling-v1')");
+    }
     await client.query('COMMIT');
   } catch (error) {
     await client.query('ROLLBACK');
@@ -64,7 +74,7 @@ export async function saveAttempt(pool, userId, attempt) {
       'SELECT * FROM exercises WHERE user_id = $1 AND id = $2 FOR UPDATE', [userId, exerciseId]);
     const { rows: [existing] } = await client.query(
       'SELECT * FROM attempts WHERE user_id = $1 AND id = $2', [userId, id]);
-    if (exercise.math_problem || exercise.subject !== subject || exercise.grade !== grade || exercise.practice_item_id !== itemId ||
+    if (exercise.math_problem || exercise.spelling_problem || exercise.subject !== subject || exercise.grade !== grade || exercise.practice_item_id !== itemId ||
         (existing && (existing.exercise_id !== exerciseId || existing.correct !== correct || existing.completed !== completed ||
           existing.answered_at.getTime() !== Date.parse(occurredAt))) ||
         (!existing && exercise.completed)) {

@@ -1,0 +1,717 @@
+{
+  "subjects": [
+    {
+      "id": "czech",
+      "slug": "cestina",
+      "name": "Čeština",
+      "kind": "spelling"
+    }
+  ],
+  "courses": [
+    {
+      "grade": 7,
+      "subject": "czech",
+      "description": "Měkké i, tvrdé y a zdůvodnění. Shoda s podmětem a koncovky podstatných jmen v jednom mixu.",
+      "sourceTitle": "Pravopis z pracovního listu · 15. září",
+      "sortOrder": 1,
+      "items": [
+        {
+          "id": "7-czech-dosli",
+          "data": {
+            "sentence": "Výletníci došl_ až ke staré tvrzi.",
+            "letter": "i",
+            "reason": "animate",
+            "explanation": "Kdo došel? Výletníci. Podmět je rodu mužského životného v množném čísle, proto má příčestí minulé koncovku -i: výletníci došli.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-tvrzi",
+          "data": {
+            "sentence": "Výletníci došli až ke staré tvrz_.",
+            "letter": "i",
+            "reason": "pisen",
+            "explanation": "Ke komu, čemu? Ke tvrzi. Tvrz je ženského rodu, vzor píseň. Ve 3. pádě jednotného čísla píšeme -i, stejně jako v tvaru písni.",
+            "reasons": [
+              {
+                "id": "pisen",
+                "text": "Vzor píseň, 3. pád jednotného čísla: ke komu, čemu?"
+              },
+              {
+                "id": "zena",
+                "text": "Vzor žena, 2. pád jednotného čísla: bez koho, čeho?"
+              },
+              {
+                "id": "hrad",
+                "text": "Vzor hrad, 1. pád množného čísla: kdo, co?"
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-rozloucili",
+          "data": {
+            "sentence": "Žáci se rozloučil_ se svými učiteli.",
+            "letter": "i",
+            "reason": "animate",
+            "explanation": "Kdo se rozloučil? Žáci. Jde o rod mužský životný v množném čísle, proto píšeme v příčestí minulém -i.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-uciteli",
+          "data": {
+            "sentence": "Žáci se rozloučili se svými učitel_.",
+            "letter": "i",
+            "reason": "muz",
+            "explanation": "S kým, čím? S učiteli. Učitel je rodu mužského životného, vzor muž. V 7. pádě množného čísla má koncovku -i: s muži, s učiteli.",
+            "reasons": [
+              {
+                "id": "muz",
+                "text": "Vzor muž, 7. pád množného čísla: s kým, čím?"
+              },
+              {
+                "id": "pan",
+                "text": "Vzor pán, 7. pád množného čísla: s kým, čím?"
+              },
+              {
+                "id": "shoda",
+                "text": "Shoda přísudku s podmětem žáci."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-videly",
+          "data": {
+            "sentence": "U lesa děti viděl_ hejno koroptví.",
+            "letter": "y",
+            "reason": "feminine",
+            "explanation": "Podmětem jsou děti. Slovo dítě je v jednotném čísle středního rodu, ale děti jsou v množném čísle rodu ženského. Proto děti viděly s -y.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-koroptvi",
+          "data": {
+            "sentence": "U lesa děti viděly hejno koroptv_.",
+            "letter": "í",
+            "reason": "pisen",
+            "explanation": "Hejno koho, čeho? Koroptví. Koroptev je ženského rodu, vzor píseň. V 2. pádě množného čísla píšeme dlouhé -í, stejně jako písní.",
+            "reasons": [
+              {
+                "id": "pisen",
+                "text": "Vzor píseň, 2. pád množného čísla: koho, čeho?"
+              },
+              {
+                "id": "zena",
+                "text": "Vzor žena, 4. pád množného čísla: koho, co?"
+              },
+              {
+                "id": "shoda",
+                "text": "Shoda přísudku s podmětem děti."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-vypravili",
+          "data": {
+            "sentence": "Naši přátelé se vypravil_ na houby.",
+            "letter": "i",
+            "reason": "animate",
+            "explanation": "Podmětem jsou přátelé, rod mužský životný v množném čísle. V příčestí minulém tedy píšeme -i: přátelé se vypravili.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-houby",
+          "data": {
+            "sentence": "Naši přátelé se vypravili na houb_.",
+            "letter": "y",
+            "reason": "zena",
+            "explanation": "Na koho, co? Na houby. Houba je ženského rodu, vzor žena. Ve 4. pádě množného čísla má koncovku -y, jako ženy.",
+            "reasons": [
+              {
+                "id": "zena",
+                "text": "Vzor žena, 4. pád množného čísla: koho, co?"
+              },
+              {
+                "id": "ruze",
+                "text": "Vzor růže, 4. pád množného čísla: koho, co?"
+              },
+              {
+                "id": "shoda",
+                "text": "Shoda přísudku s podmětem přátelé."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-meli",
+          "data": {
+            "sentence": "V dutině stromu měl_ hnízdo datli.",
+            "letter": "i",
+            "reason": "animate",
+            "explanation": "Kdo měl hnízdo? Datli. Podmět stojí až za slovesem a je rodu mužského životného v množném čísle. Proto píšeme měli s -i. Slovo hnízdo je předmět.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-datli",
+          "data": {
+            "sentence": "V dutině stromu měli hnízdo datl_.",
+            "letter": "i",
+            "reason": "pan",
+            "explanation": "Kdo měl hnízdo? Datli. Datel je rodu mužského životného, vzor pán. V 1. pádě množného čísla píšeme datli, jako páni.",
+            "reasons": [
+              {
+                "id": "pan",
+                "text": "Vzor pán, 1. pád množného čísla, rod mužský životný."
+              },
+              {
+                "id": "hrad",
+                "text": "Vzor hrad, 1. pád množného čísla, rod mužský neživotný."
+              },
+              {
+                "id": "pany",
+                "text": "Vzor pán, 4. pád množného čísla: koho, co?"
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-topoly",
+          "data": {
+            "sentence": "Vysoké topol_ sloužily jako větrolamy.",
+            "letter": "y",
+            "reason": "hrad",
+            "explanation": "Kdo, co sloužilo jako větrolamy? Topoly. Topol je rodu mužského neživotného, vzor hrad. V 1. pádě množného čísla píšeme -y: hrady, topoly.",
+            "reasons": [
+              {
+                "id": "hrad",
+                "text": "Vzor hrad, 1. pád množného čísla, rod mužský neživotný."
+              },
+              {
+                "id": "pan",
+                "text": "Vzor pán, 1. pád množného čísla, rod mužský životný."
+              },
+              {
+                "id": "muz",
+                "text": "Vzor muž, 7. pád množného čísla: s kým, čím?"
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-slouzily",
+          "data": {
+            "sentence": "Vysoké topoly sloužil_ jako větrolamy.",
+            "letter": "y",
+            "reason": "inanimate",
+            "explanation": "Podmětem jsou topoly, rod mužský neživotný v množném čísle. V příčestí minulém proto píšeme -y: topoly sloužily.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-vetrolamy",
+          "data": {
+            "sentence": "Vysoké topoly sloužily jako větrolam_.",
+            "letter": "y",
+            "reason": "hrad",
+            "explanation": "Slovo větrolam je rodu mužského neživotného a skloňuje se podle vzoru hrad. Zde je v 1. pádě množného čísla: jako hrady, jako větrolamy.",
+            "reasons": [
+              {
+                "id": "hrad",
+                "text": "Vzor hrad, 1. pád množného čísla, rod mužský neživotný."
+              },
+              {
+                "id": "pan",
+                "text": "Vzor pán, 1. pád množného čísla, rod mužský životný."
+              },
+              {
+                "id": "muz",
+                "text": "Vzor muž, 7. pád množného čísla: s kým, čím?"
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-rostly",
+          "data": {
+            "sentence": "Na břehu potoka rostl_ vrby.",
+            "letter": "y",
+            "reason": "feminine",
+            "explanation": "Kdo, co rostlo? Vrby. Podmět je rodu ženského v množném čísle, proto v příčestí minulém píšeme -y: vrby rostly.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-vrby",
+          "data": {
+            "sentence": "Na břehu potoka rostly vrb_.",
+            "letter": "y",
+            "reason": "zena",
+            "explanation": "Kdo, co rostlo? Vrby. Vrba je ženského rodu, vzor žena. V 1. pádě množného čísla má koncovku -y: ženy, vrby.",
+            "reasons": [
+              {
+                "id": "zena",
+                "text": "Vzor žena, 1. pád množného čísla: kdo, co?"
+              },
+              {
+                "id": "ruze",
+                "text": "Vzor růže, 1. pád množného čísla: kdo, co?"
+              },
+              {
+                "id": "pan",
+                "text": "Vzor pán, 1. pád množného čísla: kdo, co?"
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-mezi",
+          "data": {
+            "sentence": "V trávě na mez_ cvrkali cvrčci.",
+            "letter": "i",
+            "reason": "pisen",
+            "explanation": "Na kom, čem? Na mezi. Mez je ženského rodu, vzor píseň. V 6. pádě jednotného čísla píšeme -i: o písni, na mezi.",
+            "reasons": [
+              {
+                "id": "pisen",
+                "text": "Vzor píseň, 6. pád jednotného čísla: na kom, čem?"
+              },
+              {
+                "id": "zena",
+                "text": "Vzor žena, 2. pád jednotného čísla: koho, čeho?"
+              },
+              {
+                "id": "shoda",
+                "text": "Shoda přísudku s podmětem cvrčci."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-cvrkali",
+          "data": {
+            "sentence": "V trávě na mezi cvrkal_ cvrčci.",
+            "letter": "i",
+            "reason": "animate",
+            "explanation": "Kdo cvrkal? Cvrčci. Podmět je rodu mužského životného v množném čísle, proto píšeme v příčestí minulém -i: cvrčci cvrkali.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-hyrily",
+          "data": {
+            "sentence": "Květinové záhony hýřil_ všemi barvami.",
+            "letter": "y",
+            "reason": "inanimate",
+            "explanation": "Podmětem jsou záhony, rod mužský neživotný v množném čísle. V příčestí minulém píšeme -y: záhony hýřily.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-barvami",
+          "data": {
+            "sentence": "Květinové záhony hýřily všemi barvam_.",
+            "letter": "i",
+            "reason": "zena",
+            "explanation": "Kým, čím hýřily? Barvami. Barva je ženského rodu, vzor žena. V 7. pádě množného čísla má koncovku -ami, která končí měkkým i: ženami, barvami.",
+            "reasons": [
+              {
+                "id": "zena",
+                "text": "Vzor žena, 7. pád množného čísla, koncovka -ami."
+              },
+              {
+                "id": "hrad",
+                "text": "Vzor hrad, 7. pád množného čísla, koncovka -y."
+              },
+              {
+                "id": "shoda",
+                "text": "Shoda přísudku s podmětem záhony."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-jela",
+          "data": {
+            "sentence": "Auta jel_ s dálkovými světly.",
+            "letter": "a",
+            "reason": "neuter",
+            "explanation": "Podmětem jsou auta, rod střední v množném čísle. Příčestí minulé má koncovku -a: auta jela. Zde tedy nedoplňujeme ani i, ani y.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-svetly",
+          "data": {
+            "sentence": "Auta jela s dálkovými světl_.",
+            "letter": "y",
+            "reason": "mesto",
+            "explanation": "S kým, čím? Se světly. Světlo je středního rodu, vzor město. V 7. pádě množného čísla píšeme -y: městy, světly.",
+            "reasons": [
+              {
+                "id": "mesto",
+                "text": "Vzor město, 7. pád množného čísla: s kým, čím?"
+              },
+              {
+                "id": "more",
+                "text": "Vzor moře, 7. pád množného čísla: s kým, čím?"
+              },
+              {
+                "id": "shoda",
+                "text": "Shoda přísudku s podmětem rodu středního."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-vsi",
+          "data": {
+            "sentence": "Nad vs_ kroužili holubi.",
+            "letter": "í",
+            "reason": "kost",
+            "explanation": "Nad kým, čím? Nad vsí. Ves je ženského rodu, vzor kost. V 7. pádě jednotného čísla píšeme dlouhé -í: kostí, vsí.",
+            "reasons": [
+              {
+                "id": "kost",
+                "text": "Vzor kost, 7. pád jednotného čísla: nad kým, čím?"
+              },
+              {
+                "id": "kost-dativ",
+                "text": "Vzor kost, 3. pád jednotného čísla: ke komu, čemu?"
+              },
+              {
+                "id": "zena",
+                "text": "Vzor žena, 2. pád jednotného čísla: koho, čeho?"
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-krouzili",
+          "data": {
+            "sentence": "Nad vsí kroužil_ holubi.",
+            "letter": "i",
+            "reason": "animate",
+            "explanation": "Kdo kroužil? Holubi. Podmět je rodu mužského životného v množném čísle, proto má příčestí minulé koncovku -i: holubi kroužili.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-holubi",
+          "data": {
+            "sentence": "Nad vsí kroužili holub_.",
+            "letter": "i",
+            "reason": "pan",
+            "explanation": "Kdo kroužil? Holubi. Holub je rodu mužského životného, vzor pán. V 1. pádě množného čísla píšeme -i: páni, holubi.",
+            "reasons": [
+              {
+                "id": "pan",
+                "text": "Vzor pán, 1. pád množného čísla, rod mužský životný."
+              },
+              {
+                "id": "hrad",
+                "text": "Vzor hrad, 1. pád množného čísla, rod mužský neživotný."
+              },
+              {
+                "id": "pany",
+                "text": "Vzor pán, 4. pád množného čísla: koho, co?"
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-ridili",
+          "data": {
+            "sentence": "Účastníci soutěže se řídil_ určenými pravidly.",
+            "letter": "i",
+            "reason": "animate",
+            "explanation": "Podmětem jsou účastníci, rod mužský životný v množném čísle. V příčestí minulém proto píšeme -i: účastníci se řídili.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-pravidly",
+          "data": {
+            "sentence": "Účastníci soutěže se řídili určenými pravidl_.",
+            "letter": "y",
+            "reason": "mesto",
+            "explanation": "Kým, čím se řídili? Pravidly. Pravidlo je středního rodu, vzor město. V 7. pádě množného čísla píšeme -y: městy, pravidly.",
+            "reasons": [
+              {
+                "id": "mesto",
+                "text": "Vzor město, 7. pád množného čísla: s kým, čím?"
+              },
+              {
+                "id": "more",
+                "text": "Vzor moře, 7. pád množného čísla: s kým, čím?"
+              },
+              {
+                "id": "shoda",
+                "text": "Shoda přísudku s podmětem rodu středního."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-lezely",
+          "data": {
+            "sentence": "Přes cestu ležel_ vyvrácené stromy.",
+            "letter": "y",
+            "reason": "inanimate",
+            "explanation": "Kdo, co leželo přes cestu? Stromy. Podmět je rodu mužského neživotného v množném čísle, proto píšeme v příčestí minulém -y: stromy ležely.",
+            "reasons": [
+              {
+                "id": "animate",
+                "text": "Shoda s podmětem rodu mužského životného v množném čísle."
+              },
+              {
+                "id": "inanimate",
+                "text": "Shoda s podmětem rodu mužského neživotného v množném čísle."
+              },
+              {
+                "id": "feminine",
+                "text": "Shoda s podmětem rodu ženského v množném čísle."
+              },
+              {
+                "id": "neuter",
+                "text": "Shoda s podmětem rodu středního v množném čísle."
+              }
+            ]
+          }
+        },
+        {
+          "id": "7-czech-stromy",
+          "data": {
+            "sentence": "Přes cestu ležely vyvrácené strom_.",
+            "letter": "y",
+            "reason": "hrad",
+            "explanation": "Kdo, co leželo přes cestu? Stromy. Strom je rodu mužského neživotného, vzor hrad. V 1. pádě množného čísla píšeme -y: hrady, stromy.",
+            "reasons": [
+              {
+                "id": "hrad",
+                "text": "Vzor hrad, 1. pád množného čísla, rod mužský neživotný."
+              },
+              {
+                "id": "pan",
+                "text": "Vzor pán, 1. pád množného čísla, rod mužský životný."
+              },
+              {
+                "id": "muz",
+                "text": "Vzor muž, 7. pád množného čísla: s kým, čím?"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

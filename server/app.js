@@ -7,6 +7,7 @@ import { dailyGoals, dailyStats, hashToken, login, saveAttempt, secretToken } fr
 import { verifyGoogle } from './auth.js';
 import { readCatalog } from './catalog.js';
 import { startMath, answerMath } from './math.js';
+import { startSpelling, answerSpelling } from './spelling.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
@@ -94,7 +95,8 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
         !Number.isFinite(Date.parse(body.occurredAt)) || Date.parse(body.occurredAt) > Date.now() + 300_000) {
       return res.status(400).json({ error: 'Invalid attempt' });
     }
-    if (!(await pool.query('SELECT 1 FROM school_courses WHERE grade=$1 AND subject=$2', [body.grade, body.subject])).rowCount) {
+    if (!(await pool.query(`SELECT 1 FROM school_courses c JOIN school_subjects s ON s.id=c.subject
+      WHERE c.grade=$1 AND c.subject=$2 AND s.kind<>'spelling'`, [body.grade, body.subject])).rowCount) {
       return res.status(400).json({ error: 'Unknown course' });
     }
     if (body.itemId != null && !(await pool.query(
@@ -127,6 +129,26 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
   });
   app.get('/api/daily-goals', async (req, res) => {
     res.json(await dailyGoals(pool, req.session.id));
+  });
+  app.post('/api/spelling/exercise', async (req, res) => {
+    const { grade, subject } = req.body ?? {};
+    if (!Number.isInteger(grade) || grade < 1 || grade > 99 ||
+        typeof subject !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/.test(subject)) {
+      return res.status(400).json({ error: 'Invalid course' });
+    }
+    const exercise = await startSpelling(pool, req.session.id, grade, subject);
+    if (!exercise) return res.status(404).json({ error: 'Spelling course unavailable' });
+    res.json(exercise);
+  });
+  app.post('/api/spelling/answer', async (req, res) => {
+    const body = req.body ?? {};
+    if (!uuid.test(body.id) || !uuid.test(body.exerciseId) || ![0, 1].includes(body.step) ||
+        typeof body.answer !== 'string' || body.answer.length > 64) {
+      return res.status(400).json({ error: 'Invalid answer' });
+    }
+    const result = await answerSpelling(pool, req.session.id, body);
+    if (!result) return res.status(409).json({ error: 'Exercise has changed' });
+    res.json(result);
   });
   app.get('/api/stats', async (req, res) => {
     const { from, to } = req.query;

@@ -101,6 +101,49 @@ Adresa kurzu se sestaví jako `/#/4-trida/nemcina`.
 - Importovaný soubor není úplnou náhradou databáze. Neuvedený obsah se nemaže.
   Před hromadnou opravou zachovej původní data nebo vytvoř zálohu.
 
+## Čeština: písmeno a zdůvodnění
+
+Předmět `czech` má typ `spelling`. Přidání úlohy do 7. třídy nevyžaduje novou
+verzi aplikace; importuj například:
+
+```json
+{
+  "courses": [{
+    "grade": 7,
+    "subject": "czech",
+    "items": [{
+      "id": "7-czech-chlapci-bezeli",
+      "data": {
+        "sentence": "Chlapci běžel_ do školy.",
+        "letter": "i",
+        "reason": "animate",
+        "reasons": [
+          {"id": "animate", "text": "Shoda s podmětem rodu mužského životného v množném čísle."},
+          {"id": "feminine", "text": "Shoda s podmětem rodu ženského v množném čísle."},
+          {"id": "neuter", "text": "Shoda s podmětem rodu středního v množném čísle."}
+        ],
+        "explanation": "Podmětem jsou chlapci, rod mužský životný v množném čísle. Proto v příčestí minulém píšeme -i."
+      }
+    }]
+  }]
+}
+```
+
+Věta má právě jednu mezeru `_` a nejvýše 500 znaků. Podporovaná písmena jsou
+`i`, `í`, `y`, `ý`, `a`. Každá úloha má 3–6 odlišných možností zdůvodnění
+(`id` jako identifikátor předmětu, `text` do 500 znaků). `reason` odkazuje na
+jednu správnou možnost; `explanation` je vysvětlení do 1 000 znaků zobrazené po
+dokončení. Autor zodpovídá za věcnou správnost a jednoznačnost důvodů.
+
+Server přiděluje nejméně procvičená zadání, promíchá možnosti a uloží kopii
+zadání do historie. Úpravy obsahu se projeví až u nových přidělení; rozpracované
+úlohy zůstávají stejné. Písmeno (krok 0) a důvod (krok 1) se ověřují postupně
+přes `/api/spelling/answer`; každá odpověď má unikátní ID a opakované odeslání
+se nepočítá znovu. Oba kroky jsou nutné k dokončení.
+
+Výchozí přepis pracovního listu je v `server/spelling-seed.json`; migrace
+`spelling-v1` jej vloží pouze jednou a při dalších vydáních nepřepisuje úpravy.
+
 ## Lokální import a přímé SQL
 
 V adresáři `server/` se správnými `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`

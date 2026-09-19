@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'catalog.dart';
 import 'main.dart' show PracticePage;
 import 'english_page.dart';
+import 'spelling_page.dart';
 import 'school_widgets.dart';
 import 'progress_widgets.dart';
 
@@ -59,6 +60,15 @@ class CatalogRoute extends StatelessWidget {
               subjectName: subject['name'] as String,
               maxDigits: course['maxDigits'] as int,
               problems: catalog.problems(course),
+            );
+          }
+          if (subject['kind'] == 'spelling') {
+            return SpellingPage(
+              grade: grade,
+              gradeName: gradeName,
+              subject: subject['id'] as String,
+              subjectName: subject['name'] as String,
+              items: (course['items'] as List).cast<Map<String, dynamic>>(),
             );
           }
           return EnglishPage(

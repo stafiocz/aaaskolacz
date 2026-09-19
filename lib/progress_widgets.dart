@@ -362,8 +362,12 @@ class _ResultsPageState extends State<ResultsPage> {
       '${row['subjectName'] ?? row['subject']} · ${row['gradeName'] ?? "${row['grade']}. třída"}';
 
   String _counts(Iterable<Map<String, dynamic>> rows) {
-    final math = rows.first['subjectKind'] == 'math';
+    final label = switch (rows.first['subjectKind']) {
+      'math' => 'Dokončeno příkladů',
+      'spelling' => 'Dokončeno úloh s odůvodněním',
+      _ => 'Zvládnuto slovíček',
+    };
     int sum(String key) => rows.fold(0, (total, r) => total + (r[key] as int));
-    return '${math ? 'Dokončeno příkladů' : 'Zvládnuto slovíček'}: ${sum('completed')}\nSprávně: ${sum('correct')}   ·   Chybně: ${sum('incorrect')}';
+    return '$label: ${sum('completed')}\nSprávně: ${sum('correct')}   ·   Chybně: ${sum('incorrect')}';
   }
 }

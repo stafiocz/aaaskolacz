@@ -155,7 +155,10 @@ test('catalog migration preserves legacy accounts, sessions and results and neve
     await migrate(isolated);
     assert.equal((await isolated.query("SELECT active FROM practice_items WHERE id='3-math-additionSubtraction-1'")).rows[0].active, false);
     assert.equal((await isolated.query('SELECT name FROM school_grades WHERE id=3')).rows[0].name, 'Třeťáci');
-    assert.equal((await isolated.query('SELECT count(*)::int n FROM practice_items')).rows[0].n, 1283);
+    await isolated.query("UPDATE practice_items SET active=false WHERE id='7-czech-videly'");
+    await migrate(isolated);
+    assert.equal((await isolated.query("SELECT active FROM practice_items WHERE id='7-czech-videly'")).rows[0].active, false);
+    assert.equal((await isolated.query('SELECT count(*)::int n FROM practice_items')).rows[0].n, 1311);
   } finally {
     await isolated.end();
     await pool.query(`DROP SCHEMA ${schema} CASCADE`);
@@ -263,7 +266,7 @@ test('database-only changes appear in catalog immediately and new courses record
     return response.json();
   };
   const initial = await catalog();
-  assert.equal(initial.courses.reduce((n, c) => n + c.items.length, 0), 1283);
+  assert.equal(initial.courses.reduce((n, c) => n + c.items.length, 0), 1311);
   try {
     await importTransaction(newContent());
     const updated = await catalog();
@@ -412,5 +415,72 @@ test('editing or deactivating catalog content preserves the already assigned que
     assert.equal((await solveMath(session, exercise)).correct, true);
   } finally {
     await pool.query('UPDATE practice_items SET active=$2, data=$3 WHERE id=$1', [original.id, original.active, original.data]);
+  }
+});
+
+async function spellingExercise(session) {
+  const response = await post('/api/spelling/exercise', session, { grade: 7, subject: 'czech' });
+  assert.equal(response.status, 200);
+  return response.json();
+}
+
+test('Czech requires correct letter and reason, persists across tabs and login, and records one completion', async () => {
+  const session = await signIn();
+  const first = await spellingExercise(session);
+  const tabs = await Promise.all(Array.from({ length: 5 }, () => spellingExercise(session)));
+  for (const tab of tabs) assert.deepEqual(tab, first);
+  const payload = { id: randomUUID(), exerciseId: first.exerciseId, step: 0, answer: first.problem.letter };
+  const wrongLetter = { ...payload, id: randomUUID(), answer: first.problem.letter === 'i' ? 'y' : 'i', correct: true, completed: true };
+  assert.deepEqual(await (await post('/api/spelling/answer', session, wrongLetter)).json(), { correct: false, completed: false });
+  assert.deepEqual(await spellingExercise(session), first);
+  assert.equal((await post('/api/spelling/answer', session, { ...payload, step: 1, answer: first.problem.reason })).status, 409);
+  const responses = await Promise.all(Array.from({ length: 5 }, () => post('/api/spelling/answer', session, payload)));
+  for (const response of responses) assert.deepEqual(await response.json(), { correct: true, completed: false });
+  const again = await signIn();
+  await migrate(pool);
+  const second = await spellingExercise(again);
+  assert.deepEqual(second, { ...first, step: 1 });
+  const wrongReason = first.problem.reasons.find(r => r.id !== first.problem.reason).id;
+  assert.deepEqual(await (await post('/api/spelling/answer', again, { ...payload, id: randomUUID(), step: 1, answer: wrongReason })).json(),
+    { correct: false, completed: false });
+  assert.deepEqual(await spellingExercise(again), second);
+  assert.equal((await post('/api/spelling/answer', again, { ...payload, id: randomUUID() })).status, 409);
+  assert.equal((await post('/api/spelling/answer', again, { ...payload, answer: wrongLetter.answer })).status, 409);
+  const last = { ...payload, id: randomUUID(), step: 1, answer: first.problem.reason };
+  assert.deepEqual(await (await post('/api/spelling/answer', again, last)).json(), { correct: true, completed: true });
+  const next = await spellingExercise(again);
+  assert.notEqual(next.exerciseId, first.exerciseId);
+  assert.notEqual(next.itemId, first.itemId);
+  assert.deepEqual(await (await post('/api/spelling/answer', again, last)).json(), { correct: true, completed: true });
+  assert.deepEqual(await spellingExercise(again), next);
+  const day = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Prague' }).format(new Date());
+  const [row] = await stats(again, day, day);
+  assert.equal(row.subject, 'czech'); assert.equal(row.grade, 7);
+  assert.equal(row.practiced, 1); assert.equal(row.correct, 2); assert.equal(row.incorrect, 2); assert.equal(row.completed, 1);
+  const goals = await dailyGoals(pool, session.user.id);
+  assert.equal(goals.math, 0); assert.equal(goals.vocabulary, 0);
+});
+
+test('Czech rejects forged completion, another account, invalid steps and CSRF; assigned content survives edits', async () => {
+  const alice = await signIn(), bob = await signIn('bob');
+  const first = await spellingExercise(alice);
+  const payload = { id: randomUUID(), exerciseId: first.exerciseId, step: 0, answer: first.problem.letter };
+  assert.equal((await post('/api/spelling/answer', bob, payload)).status, 409);
+  assert.equal((await post('/api/spelling/answer', alice, payload, { 'X-CSRF-Token': '' })).status, 403);
+  assert.equal((await fetch(base + '/api/spelling/exercise', { method: 'POST' })).status, 401);
+  assert.equal((await post('/api/spelling/exercise', alice, { grade: 3, subject: 'math' })).status, 404);
+  assert.equal((await post('/api/spelling/exercise', alice, { grade: '7', subject: 'czech' })).status, 400);
+  for (const change of [{ id: 'x' }, { step: 2 }, { step: '0' }, { answer: 1 }, { answer: 'a'.repeat(65) }]) {
+    assert.equal((await post('/api/spelling/answer', alice, { ...payload, ...change })).status, 400);
+  }
+  assert.equal((await post('/api/attempts', alice, attempt({ subject: 'czech', grade: 7, exerciseId: first.exerciseId, itemId: first.itemId }))).status, 400);
+  assert.equal((await post('/api/attempts', alice, attempt({ subject: 'czech', grade: 7 }))).status, 400);
+  const { rows: [original] } = await pool.query('SELECT * FROM practice_items WHERE id=$1', [first.itemId]);
+  try {
+    await pool.query("UPDATE practice_items SET active=false, data=jsonb_set(data, '{letter}', '\"a\"'::jsonb) WHERE id=$1", [first.itemId]);
+    assert.deepEqual(await spellingExercise(alice), first);
+    assert.deepEqual(await (await post('/api/spelling/answer', alice, payload)).json(), { correct: true, completed: false });
+  } finally {
+    await pool.query('UPDATE practice_items SET active=$2,data=$3 WHERE id=$1', [original.id, original.active, original.data]);
   }
 });

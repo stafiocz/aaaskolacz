@@ -87,6 +87,27 @@ Opakovaná fotografie strany 16 a opakování již uvedených slov nevytvářej�
 Procvičování je na `/#/5-trida/anglictina`. Používá stejný postup níže jako
 7. třída, ale vlastní slovník. Témata se míchají automaticky.
 
+## 7. třída — Čeština
+
+Na `/#/7-trida/cestina` je mix 28 míst k doplnění z fotografie pracovního
+listu z 15. září. Každé zadání ukazuje celou větu s jednou mezerou:
+
+1. Žák doplní `i`, `í`, `y`, `ý` nebo `a` (ve větě „Auta jela“).
+2. Po správném písmenu vybere zdůvodnění: shodu s podmětem, nebo vzor,
+   pád a číslo podstatného jména. Pořadí možností se při přidělení promíchá.
+3. Teprve správné zdůvodnění dokončí úlohu a zobrazí celé vysvětlení.
+
+Chyba nechá žáka u stejného kroku. Server ukládá rozpracovanou úlohu včetně
+pořadí možností; návrat, obnovení stránky, další karta ani nové přihlášení
+nevylosují jiné zadání. Host má rozpracovaný krok uložený v prohlížeči.
+Historie češtiny počítá odpovědi v obou krocích a jednu dokončenou úlohu
+až po obou správných odpovědích. Čeština nemění denní cíle matematiky a slovíček.
+
+Migrace `spelling-v1` jednorázově přidá předmět, kurz a `server/spelling-seed.json`.
+Další úlohy lze importovat do databáze; postup a formát jsou v [CONTENT.md](CONTENT.md).
+Pravidla shody odpovídají [Internetové jazykové příručce ÚJČ](https://prirucka.ujc.cas.cz/?id=600),
+včetně zvláštního případu „děti viděly“. Písmena i důvody ověřuje server.
+
 ## 7. třída — Angličtina
 
 Slovíčka a fráze pocházejí z dodaných fotografií stran 4–7, **Introduction A: New
@@ -123,8 +144,9 @@ v PostgreSQL. Web načítá aktivní nabídku přes `GET /api/catalog` bez cache
 Nová třída, předmět nebo zadání se projeví po obnovení stránky či tlačítkem
 **Obnovit nabídku** na úvodu. Rozpracované cvičení používá již načtený obsah.
 
-Podporované typy předmětů jsou `math` (číselná odpověď, případně návazné kroky)
-a `vocabulary` (kartičky a psaný překlad). Přidání obsahu těchto typů nevyžaduje
+Podporované typy předmětů jsou `math` (číselná odpověď, případně návazné kroky),
+`vocabulary` (kartičky a psaný překlad) a `spelling` (písmeno a zdůvodnění).
+Přidání obsahu těchto typů nevyžaduje
 novou verzi. Zcela nový způsob zkoušení vyžaduje doplnění aplikace.
 
 První migrace `catalog-v1` vloží `server/content-seed.json` **pouze jednou**:
@@ -173,7 +195,8 @@ Přehled pro každý den zvoleného měsíce odděluje třídy a předměty:
 výsledky každého dítěte použijte jeho vlastní účet. API ověřuje Google ID token,
 nonce, původ požadavku, serverovou session a CSRF token. Session trvá 30 dní,
 cookie je HttpOnly/Secure/SameSite=Lax a v databázi je jen hash session tokenu.
-Ukládá se jméno, e-mail, výsledky a číselné odpovědi přihlášené matematiky;
+Ukládá se jméno, e-mail, výsledky, číselné odpovědi přihlášené matematiky
+a zvolená písmena a důvody u češtiny;
 neukládá se Google token ani zadaný text u slovíček. Vyhodnocení slovíček
 a starších verzí aplikace API přebírá od klienta; nejde o zabezpečený školní test.
 
