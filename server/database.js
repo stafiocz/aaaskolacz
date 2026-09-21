@@ -80,6 +80,28 @@ export async function login(pool, identity, previousToken) {
   } finally { client.release(); }
 }
 
+export async function exchangeMobileCode(pool, code, verifier) {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows: [grant] } = await client.query(`DELETE FROM mobile_login_codes
+      WHERE code_hash=$1 AND challenge=$2 AND expires_at > now() RETURNING user_id`,
+    [hashToken(code), hashToken(verifier)]);
+    if (!grant) {
+      await client.query('ROLLBACK');
+      return null;
+    }
+    const token = secretToken();
+    await client.query(`INSERT INTO sessions VALUES ($1, $2, $3, now() + interval '30 days')`,
+      [hashToken(token), grant.user_id, secretToken()]);
+    await client.query('COMMIT');
+    return token;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally { client.release(); }
+}
+
 export async function saveAttempt(pool, userId, attempt) {
   const { id, exerciseId, subject, grade, correct, completed, occurredAt, itemId = null } = attempt;
   const client = await pool.connect();

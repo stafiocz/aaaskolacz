@@ -7,6 +7,12 @@ Nunito se třemi barevnými A.
 
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
+Android aplikace má balíček `cz.aaaskola.app`, používá stejný katalog, účet,
+denní cíle a rozpracované testy jako web. Přihlášení probíhá v systémovém
+prohlížeči a vrací se do aplikace; token je v zabezpečeném úložišti Androidu.
+Postup hosta přežije zavření aplikace. Nové učivo se načítá z databáze bez
+aktualizace aplikace. Sestavení a výdej popisuje [ANDROID.md](ANDROID.md).
+
 Na úvodu je rozcestník **7. třída → Angličtina / Čeština / Němčina**, **5. třída → Matematika / Angličtina**
 a **3. třída / 2. třída → Matematika**.
 Z předmětu se lze vrátit na výběr předmětů a tříd.

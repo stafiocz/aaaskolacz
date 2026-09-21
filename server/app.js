@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { timingSafeEqual } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { dailyGoals, dailyStats, hashToken, login, saveAttempt, secretToken } from './database.js';
+import { dailyGoals, dailyStats, exchangeMobileCode, hashToken, login, saveAttempt, secretToken } from './database.js';
 import { verifyGoogle } from './auth.js';
 import { readCatalog } from './catalog.js';
 import { startPractice, answerPractice } from './practice.js';
@@ -19,6 +19,7 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
   const secure = origin.startsWith('https://');
   const sessionCookie = secure ? '__Host-aaaskola_session' : 'aaaskola_session';
   const nonceCookie = secure ? '__Host-aaaskola_nonce' : 'aaaskola_nonce';
+  const mobileCookie = secure ? '__Host-aaaskola_mobile' : 'aaaskola_mobile';
   const cookies = { httpOnly: true, secure, sameSite: 'lax', path: '/' };
   app.disable('x-powered-by');
   app.set('trust proxy', 1);
@@ -37,10 +38,19 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
     if (!clientId) return res.status(503).type('html').send('<h1>Přihlášení zatím není připravené.</h1><a href="/">Zpět do školy</a>');
     const nonce = secretToken();
     res.cookie(nonceCookie, nonce, { ...cookies, maxAge: 10 * 60_000 });
+    const { mobile_challenge: challenge, state } = req.query;
+    if (challenge != null || state != null) {
+      if (typeof challenge !== 'string' || typeof state !== 'string' ||
+          !/^[a-f0-9]{64}$/.test(challenge) || !/^[a-f0-9]{64}$/.test(state)) {
+        return res.status(400).send('Invalid mobile login');
+      }
+      res.cookie(mobileCookie, `${challenge}.${state}.${nonce}`, { ...cookies, maxAge: 10 * 60_000 });
+    } else res.clearCookie(mobileCookie, cookies);
     res.set({ 'Content-Security-Policy': "default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; frame-src https://accounts.google.com; connect-src 'self' https://accounts.google.com/gsi/; style-src 'self' https://accounts.google.com/gsi/style; img-src 'self' data: https://*.googleusercontent.com; base-uri 'none'; frame-ancestors 'none'", 'Cross-Origin-Opener-Policy': 'same-origin-allow-popups' });
     res.type('html').send(`<!doctype html><html lang="cs"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Přihlášení · AAA škola</title><link rel="stylesheet" href="/auth/login.css"><script src="https://accounts.google.com/gsi/client" defer></script><script src="/auth/login.js" defer></script></head><body><main><img src="/favicon.png" width="64" height="64" alt=""><h1>Vítej v AAA škole</h1><p>Přihlas se a uvidíš své výsledky každý den.</p><div id="google-signin" data-client-id="${html(clientId)}" data-nonce="${nonce}"></div><p id="status" role="status"></p><p>Uložíme jméno, e-mail a výsledky procvičování. Přehled uvidíš jen po přihlášení ke svému účtu.</p><a href="/">Zpět do školy</a></main></body></html>`);
   });
   app.use('/auth', express.static(fileURLToPath(new URL('./public', import.meta.url)), { dotfiles: 'deny' }));
+  app.get('/privacy', (req, res) => res.sendFile(fileURLToPath(new URL('./public/privacy.html', import.meta.url))));
   app.post('/api/auth/google', rateLimit({ windowMs: 60_000, limit: 15, legacyHeaders: false }), async (req, res) => {
     if (!clientId) return res.status(503).json({ error: 'Google login is not configured' });
     const { credential, nonce } = req.body ?? {};
@@ -54,10 +64,35 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
     const result = await login(pool, identity, req.cookies[sessionCookie]);
     res.cookie(sessionCookie, result.token, { ...cookies, maxAge: 30 * 86400_000 });
     res.clearCookie(nonceCookie, cookies);
+    const mobile = req.cookies[mobileCookie];
+    res.clearCookie(mobileCookie, cookies);
+    if (typeof mobile === 'string' && /^[a-f0-9]{64}\.[a-f0-9]{64}\.[a-f0-9]{64}$/.test(mobile)) {
+      const [challenge, state, loginNonce] = mobile.split('.');
+      if (equal(loginNonce, nonce)) {
+        const code = secretToken();
+        await pool.query('DELETE FROM mobile_login_codes WHERE expires_at < now()');
+        await pool.query(`INSERT INTO mobile_login_codes VALUES ($1,$2,$3,now() + interval '2 minutes')`,
+          [hashToken(code), result.user.id, challenge]);
+        return res.json({ redirect: `cz.aaaskola.app:/login?code=${code}&state=${state}` });
+      }
+    }
     res.json({ user: result.user });
   });
+  app.post('/api/auth/mobile', rateLimit({ windowMs: 60_000, limit: 15, legacyHeaders: false }), async (req, res) => {
+    const { code, verifier } = req.body ?? {};
+    if (typeof code !== 'string' || typeof verifier !== 'string' ||
+        !/^[a-f0-9]{64}$/.test(code) || !/^[a-f0-9]{64}$/.test(verifier)) {
+      return res.status(400).json({ error: 'Invalid mobile login' });
+    }
+    const token = await exchangeMobileCode(pool, code, verifier);
+    if (!token) return res.status(401).json({ error: 'Mobile login expired or invalid' });
+    res.json({ token });
+  });
   app.use('/api', async (req, res, next) => {
-    const token = req.cookies[sessionCookie];
+    const authorization = req.get('authorization');
+    req.bearer = /^Bearer [a-f0-9]{64}$/.test(authorization ?? '');
+    const token = authorization ? (req.bearer ? authorization.slice(7) : null) : req.cookies[sessionCookie];
+    req.authToken = token;
     if (typeof token === 'string' && /^[a-f0-9]{64}$/.test(token)) {
       const { rows: [session] } = await pool.query(`SELECT s.csrf, u.id, u.name, u.email
         FROM sessions s JOIN users u ON u.id = s.user_id
@@ -74,13 +109,13 @@ export function createApp({ pool, origin, clientId = '', webRoot, verifyIdentity
   });
   app.use('/api', (req, res, next) => {
     if (!req.session) return res.status(401).json({ error: 'Sign in required' });
-    if (req.method !== 'GET' && (req.get('origin') !== origin || !equal(req.get('x-csrf-token'), req.session.csrf))) {
+    if (req.method !== 'GET' && ((!req.bearer && req.get('origin') !== origin) || !equal(req.get('x-csrf-token'), req.session.csrf))) {
       return res.status(403).json({ error: 'Invalid request' });
     }
     next();
   });
   app.post('/api/logout', async (req, res) => {
-    await pool.query('DELETE FROM sessions WHERE token_hash = $1', [hashToken(req.cookies[sessionCookie])]);
+    await pool.query('DELETE FROM sessions WHERE token_hash = $1', [hashToken(req.authToken)]);
     res.clearCookie(sessionCookie, cookies).sendStatus(204);
   });
   app.post('/api/attempts', async (req, res) => {

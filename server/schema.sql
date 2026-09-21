@@ -12,6 +12,12 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at timestamptz NOT NULL
 );
 CREATE INDEX IF NOT EXISTS sessions_expiry ON sessions(expires_at);
+CREATE TABLE IF NOT EXISTS mobile_login_codes (
+  code_hash text PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  challenge text NOT NULL,
+  expires_at timestamptz NOT NULL
+);
 CREATE TABLE IF NOT EXISTS exercises (
   user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   id uuid NOT NULL,

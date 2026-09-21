@@ -8,8 +8,12 @@ import 'progress.dart';
 import 'progress_widgets.dart';
 import 'test_session.dart';
 import 'test_progress.dart';
+import 'mobile_platform.dart';
 
-void main() => runApp(const AaaSkolaApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(AaaSkolaApp(progress: await createMobileProgress()));
+}
 
 const _green = Color(0xFF226552);
 const _ink = Color(0xFF243C34);

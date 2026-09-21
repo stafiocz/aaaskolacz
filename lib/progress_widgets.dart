@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'progress.dart';
 import 'school_widgets.dart';
@@ -136,8 +137,14 @@ class AccountCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               FilledButton(
-                onPressed: progress.loginAvailable ? progress.openLogin : null,
-                child: const Text('Přihlásit se přes Google'),
+                onPressed: progress.loginAvailable && !progress.signingIn
+                    ? progress.signIn
+                    : null,
+                child: Text(
+                  progress.signingIn
+                      ? 'Přihlašuji…'
+                      : 'Přihlásit se přes Google',
+                ),
               ),
               Text(
                 progress.loginAvailable
@@ -156,6 +163,22 @@ class AccountCard extends StatelessWidget {
                 child: const Text('Zkusit znovu'),
               ),
             ],
+            TextButton(
+              onPressed: () async {
+                final opened = await launchUrl(
+                  Uri.parse('https://aaaskola.cz/privacy'),
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!opened && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Otevři aaaskola.cz/privacy v prohlížeči.'),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Soukromí a odstranění účtu'),
+            ),
           ],
         ),
       ),

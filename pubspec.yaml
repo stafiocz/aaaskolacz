@@ -2,21 +2,28 @@ name: aaaskola
 description: "AAA škola – hravé procvičování pro děti."
 homepage: https://aaaskola.cz
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.12.2
 
 dependencies:
+  crypto: ^3.0.7
   flutter:
     sdk: flutter
+  flutter_secure_storage: ^11.2.0
+  flutter_web_auth_2: ^5.1.0
   http: ^1.6.0
+  path_provider: ^2.1.6
+  url_launcher: ^6.3.2
   web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true

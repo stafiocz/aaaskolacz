@@ -52,6 +52,60 @@ async function stats(session, from = '2026-03-01', to = '2026-03-31') {
   assert.equal(response.status, 200); return (await response.json()).days;
 }
 
+async function mobileGrant() {
+  const verifier = 'a'.repeat(64), state = 'b'.repeat(64);
+  const start = await fetch(base + `/login?mobile_challenge=${hashToken(verifier)}&state=${state}`);
+  const cookies = start.headers.getSetCookie().map(c => c.split(';')[0]);
+  const nonce = cookies[0].split('=')[1];
+  const auth = await fetch(base + '/api/auth/google', { method: 'POST',
+    headers: { 'Content-Type': 'application/json', Origin: origin, Cookie: cookies.join('; ') },
+    body: JSON.stringify({ nonce, credential: 'alice' }) });
+  assert.equal(auth.status, 200);
+  const callback = new URL((await auth.json()).redirect);
+  assert.equal(callback.protocol, 'cz.aaaskola.app:');
+  assert.equal(callback.pathname, '/login');
+  assert.equal(callback.searchParams.get('state'), state);
+  return { code: callback.searchParams.get('code'), verifier };
+}
+function exchange(grant) {
+  return fetch(base + '/api/auth/mobile', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(grant) });
+}
+
+test('mobile login is bound to its verifier, expires and can only be exchanged once', async () => {
+  const grant = await mobileGrant();
+  assert.equal((await exchange({ ...grant, verifier: 'c'.repeat(64) })).status, 401);
+  const results = await Promise.all([exchange(grant), exchange(grant)]);
+  assert.deepEqual(results.map(r => r.status).sort(), [200, 401]);
+  const token = (await results.find(r => r.status === 200).json()).token;
+  assert.equal((await pool.query('SELECT count(*)::int n FROM sessions WHERE token_hash=$1', [hashToken(token)])).rows[0].n, 1);
+  const expired = await mobileGrant();
+  await pool.query("UPDATE mobile_login_codes SET expires_at=now()-interval '1 second'");
+  assert.equal((await exchange(expired)).status, 401);
+  assert.equal((await exchange({ code: [grant.code], verifier: grant.verifier })).status, 400);
+  assert.equal((await fetch(base + '/login?mobile_challenge=bad&state=bad')).status, 400);
+});
+
+test('mobile bearer session shares web account and supports CSRF-protected practice and logout', async () => {
+  const web = await signIn();
+  const { token } = await (await exchange(await mobileGrant())).json();
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  const me = await (await fetch(base + '/api/me', { headers })).json();
+  assert.equal(me.user.id, web.user.id);
+  const payload = JSON.stringify({ grade: 3, subject: 'math' });
+  assert.equal((await fetch(base + '/api/math/exercise', { method: 'POST', headers, body: payload })).status, 403);
+  headers['X-CSRF-Token'] = me.csrf;
+  const first = await (await fetch(base + '/api/math/exercise', { method: 'POST', headers, body: payload })).json();
+  const resumed = await (await post('/api/math/exercise', web, { grade: 3, subject: 'math' })).json();
+  assert.equal(first.exerciseId, resumed.exerciseId);
+  assert.ok(first.exerciseId);
+  const bad = await (await fetch(base + '/api/me', { headers: { Authorization: 'Bearer invalid', Cookie: web.cookie } })).json();
+  assert.equal(bad.user, null);
+  assert.equal((await fetch(base + '/api/logout', { method: 'POST', headers })).status, 204);
+  assert.equal((await (await fetch(base + '/api/me', { headers })).json()).user, null);
+  assert.equal((await (await fetch(base + '/api/me', { headers: { Cookie: web.cookie } })).json()).user.id, web.user.id);
+});
+
 test('health checks database; guest cannot read or write results', async () => {
   assert.equal((await fetch(base + '/healthz')).status, 200);
   assert.equal((await (await fetch(base + '/api/me')).json()).user, null);

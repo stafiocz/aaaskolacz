@@ -1,4 +1,4 @@
-package com.example.nasobilka
+package cz.aaaskola.app
 
 import io.flutter.embedding.android.FlutterActivity
 

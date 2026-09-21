@@ -44,6 +44,7 @@ class ProgressController extends ChangeNotifier {
     this.readPending = storage.readPending,
     this.writePending = storage.writePending,
     this.openLogin = storage.openLogin,
+    this.nativeLogin,
     this.readPractice = storage.readPractice,
     this.writePractice = storage.writePractice,
   }) : _client = client ?? http.Client(),
@@ -57,6 +58,8 @@ class ProgressController extends ChangeNotifier {
   final String? Function(String) readPending;
   final void Function(String, String) writePending;
   final void Function() openLogin;
+  final Future<void> Function()? nativeLogin;
+  bool signingIn = false;
   final String? Function(String) readPractice;
   final void Function(String, String?) writePractice;
   final Map<String, Map<String, dynamic>?> _guestMath = {};
@@ -79,6 +82,26 @@ class ProgressController extends ChangeNotifier {
   final List<Map<String, dynamic>> _pending = [];
   int get pendingCount => _pending.length;
   bool get signedIn => user != null;
+
+  Future<void> signIn() async {
+    if (signingIn) return;
+    if (nativeLogin == null) {
+      openLogin();
+      return;
+    }
+    signingIn = true;
+    error = null;
+    _changed();
+    try {
+      await nativeLogin!();
+      await load();
+    } catch (_) {
+      error = 'Přihlášení nebylo dokončeno. Zkus to znovu.';
+    } finally {
+      signingIn = false;
+      _changed();
+    }
+  }
 
   void _changed() {
     if (!_disposed) notifyListeners();

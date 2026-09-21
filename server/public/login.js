@@ -16,7 +16,8 @@ if (!window.google?.accounts?.id) {
           body: JSON.stringify({ credential, nonce: button.dataset.nonce }),
         });
         if (!response.ok) throw new Error('Login failed');
-        window.location.replace('/');
+        const result = await response.json();
+        window.location.replace(result.redirect || '/');
       } catch {
         status.textContent = 'Přihlášení se nepodařilo. Obnov stránku a zkus to znovu.';
       }
