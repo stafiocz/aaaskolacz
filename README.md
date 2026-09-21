@@ -8,7 +8,7 @@ Nunito se třemi barevnými A.
 Cílová doména aplikace: [aaaskola.cz](https://aaaskola.cz/).
 
 Na úvodu je rozcestník **7. třída → Angličtina / Čeština / Němčina**, **5. třída → Matematika / Angličtina**
-a **3. třída → Matematika**.
+a **3. třída / 2. třída → Matematika**.
 Z předmětu se lze vrátit na výběr předmětů a tříd.
 
 ## Testy, chyby a rozpracované kolo
@@ -43,6 +43,21 @@ Zadání v kole jsou uložená jako snímky, úpravy katalogu je nemění. Migra
 převezme již rozpracované matematické a české zadání včetně aktuálního kroku.
 Přihlášené zkoušení vyžaduje spojení se serverem. Při výpadku se samo nepřepne
 na nové zadání hosta; odpověď lze bezpečně odeslat znovu.
+
+## 2. třída — Matematika
+
+Kurz na `/#/2-trida/matematika` obsahuje 880 různých úloh z fotografií
+pracovního sešitu, strany 3–6 a 9–24. Tištěná zadání jsou přepsaná v
+`tool/math_grade2_source.json`; chybné ručně dopsané výsledky se nepřebírají.
+
+Mix vyvažuje počítání do 20, do 100, celé desítky, doplňování chybějícího
+čísla, závorky, rozklad přes desítku a zaokrouhlování na desítky. Rozklad
+vyžaduje první část, druhou část a výsledek. U úloh „vypočítej a zaokrouhli“
+se zadává nejprve přesný výsledek a potom zaokrouhlení; 5 se zaokrouhluje nahoru.
+Vícekrokové úlohy se dokončí a započítají až po poslední správné odpovědi.
+Platí stejná pravidla denního cíle, prodloužení za chyby a pozdějšího opakování.
+
+Obsah se importuje do databáze bez vydání aplikace, viz `CONTENT.md`.
 
 ## 3. třída — Matematika
 

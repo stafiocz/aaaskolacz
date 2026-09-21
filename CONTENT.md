@@ -16,12 +16,30 @@ scripts\aaaskola\import-content.cmd -ContentPath C:\cesta\obsah.json
 `-Check` provede validaci proti skutečné databázi a transakci vrátí zpět.
 `-WhatIf` pouze lokálně ověří JSON a zobrazí plán. Skript používá existující
 `maintenance.yml`, současnou image aplikace a dočasnou službu s Docker secret.
-Službu a její konfiguraci po importu odstraní. Dávka má nejvýše 16 KB;
-větší soubor rozděl na více samostatných JSON dokumentů. Do souborů patří pouze
+Službu a její konfiguraci po importu odstraní. Skript obsah komprimuje pomocí gzip.
+Dávka má nejvýše 400 KB rozbaleného JSON a zakódovaný příkaz nejvýše 50 000 znaků;
+při překročení limitu rozděl obsah na více JSON dokumentů. Do souborů patří pouze
 veřejný učební obsah, nikoliv hesla nebo osobní údaje.
 
 Po úspěchu obnov nabídku na [aaaskola.cz](https://aaaskola.cz/).
 Stav a přesná zadání vrací [API nabídky](https://aaaskola.cz/api/catalog).
+
+## Matematika pro 2. třídu
+
+Přepis 20 fotografií (strany 3–6 a 9–24) je v `tool/math_grade2_source.json`.
+Export přepočítá výsledky, sloučí opakující se zadání a vytvoří 880 úloh
+včetně rozkladů a zaokrouhlování. `sourcePages` u zadání uchovává čísla stran.
+Z kořene aplikace spusť:
+
+```powershell
+node tool/export_math_grade2.mjs ../stafio-app/local/aaaskola-grade2/import
+```
+
+Vznikne úplný `content.json` pro výše uvedený import. Nejprve jej ověř pomocí
+`-Check`, potom importuj bez přepínače. Celá třída a kurz se uloží v jedné
+transakci; při chybě se neuloží žádná část.
+Export slouží k prvotnímu naplnění nebo vědomému obnovení této sady;
+běžné pozdější úpravy jednotlivých zadání dělej samostatným importem.
 
 ## Přidání matematického příkladu
 
