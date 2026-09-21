@@ -55,6 +55,20 @@ Veřejné informace o údajích a žádosti o odstranění účtu jsou na
 Před veřejným vydáním doplň v Play Console pravdivé údaje o cílovém věku,
 obsahu a zpracování dat, hodnocení obsahu, popis a snímky aplikace.
 
+## Snímky pro Google Play
+
+Na čistém Android emulátoru spusť následující příkaz. Test otevře skutečné
+obrazovky hosta s živým katalogem a uloží šest PNG do zvoleného adresáře.
+Výsledky neodesílá do účtu na serveru.
+
+```powershell
+$env:STORE_SCREENSHOT_DIR='C:/cesta/k/vydani/store'
+flutter drive --driver=test_driver/store_screenshots.dart --target=integration_test/store_screenshots_test.dart -d emulator-5554
+```
+
+Před nahráním zkontroluj čitelnost snímků a převeď je na RGB PNG bez alfa
+kanálu. Ikona pro obchod má 512 × 512 px, hlavní grafika 1024 × 500 px.
+
 ## Přihlášení
 
 Android otevře `/login` s náhodným stavem a SHA-256 otiskem jednorázového
