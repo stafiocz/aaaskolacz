@@ -3,6 +3,8 @@
 - Balíček: `cz.aaaskola.app`, název **AAA škola**, čeština, zdarma.
 - Google Play: organizace **Stafio.cz**, účet `5191506570243272151`.
 - První vydání: `1.0.0+2`; další vydání musí zvýšit číslo za `+`.
+- Play Console app ID: `4976121791494939120`, internal track ID: `4700653638520104340`.
+- Přihlášení testerů: https://play.google.com/apps/internaltest/4700653638520104340
 - Flutter 3.44.8, JDK z Android Studia, Android SDK dle Flutteru.
 - API a katalog: `https://aaaskola.cz`. Přihlášené procvičování vyžaduje internet.
 
