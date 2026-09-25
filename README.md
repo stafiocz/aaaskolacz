@@ -309,7 +309,7 @@ služba `products-aaaskola_web`. Node 24 obsluhuje Flutter web i API na portu 80
 HTTPS a certifikát Let's Encrypt zajišťuje společný Traefik přes síť `servers`.
 DNS záznam A pro `aaaskola.cz` musí směřovat na `77.78.90.63`.
 
-Sestavení používá Flutter **3.44.8** a image `stafio/aaaskolacz:sha-<commit>`.
+Sestavení používá Flutter **3.44.8** a image `stafio/aaaskolacz:YYMMDD` (datum buildu v Europe/Prague).
 Workflow v tomto repozitáři kontroluje kód, testy i všechny soubory obsluhované
 kontejnerem. Volá se z infrastrukturního repozitáře, kde jsou uloženy přístupy
 k Docker Hubu a Swarmu.
@@ -332,7 +332,7 @@ Ruční postup odpovídající skriptu:
 
 1. Commitněte a pushněte zdroje do `main` a zjistěte celé SHA commitu.
 2. V repozitáři [infrsastructure-ds](https://github.com/stafiocz/infrsastructure-ds)
-   nastavte v `products/aaaskola.yml` image `stafio/aaaskolacz:sha-<commit>`.
+   nastavte v `products/aaaskola.yml` image `stafio/aaaskolacz:YYMMDD` s dnešním datem (vydávejte v den buildu).
    Commitněte a pushněte s `[no-ticket] [skip ci]` — sestavení zajistí další krok.
 3. Spusťte workflow **Release AAA skola** s parametrem `source` nastaveným na SHA:
 
